@@ -517,10 +517,13 @@ const formatUserCardProgressForSupabase = (progress) => ({
       progress?.easiness || 2.5
     );
 
+    // Ensure nextReview is a Date object before calling toISOString
+    const nextReviewDate = nextReview instanceof Date ? nextReview : new Date(nextReview);
+
     const updatedProgress = {
       card_id: currentCard.id,
       user_id: userId,
-      nextReview: nextReview.toISOString(),
+      nextReview: nextReviewDate.toISOString(),
       interval,
       easiness,
       reviewCount: (progress?.reviewCount || 0) + 1,
@@ -572,39 +575,50 @@ const formatUserCardProgressForSupabase = (progress) => ({
     window.location.reload();
   };
 
-  const getCardsToReview = async (subjectsArray = ['all']) => {
+  const getCardsToReview = async (subjectsArray = ['all'], options = {}) => {
+    const { includeFuture = false } = options;
     const userId = session?.user?.id;
     if (!userId || !cards) return [];
 
     const now = new Date();
-    const userProgress = await db.user_card_progress
-      .where('user_id').equals(userId)
-      .and(p => new Date(p.nextReview) <= now)
-      .toArray();
+    const allUserProgress = await db.user_card_progress.where('user_id').equals(userId).toArray();
+    const progressMap = new Map(allUserProgress.map(p => [p.card_id, p]));
 
-    if (userProgress.length === 0) return [];
-
-    const cardIdsToReview = userProgress.map(p => p.card_id);
-    let cardsToReview = await db.cards.where('id').anyOf(cardIdsToReview).toArray();
-
+    let cardsToReviewQuery = db.cards.toCollection();
     if (!subjectsArray.includes('all')) {
-      cardsToReview = cardsToReview.filter(c => subjectsArray.includes(c.subject));
+      cardsToReviewQuery = cardsToReviewQuery.filter(c => subjectsArray.includes(c.subject));
     }
+    const allCardsInFilter = await cardsToReviewQuery.toArray();
 
-    // Associer la progression à chaque carte pour le mode révision
-    const progressMap = new Map(userProgress.map(p => [p.card_id, p]));
-    const mergedCards = cardsToReview.map(card => ({
+    const dueCards = allCardsInFilter.filter(card => {
+      const progress = progressMap.get(card.id);
+      if (!progress) return true; // C'est une nouvelle carte, elle est due
+      if (includeFuture) return true; // En mode "Révision Libre", on prend tout
+      return new Date(progress.nextReview) <= now; // Sinon, on vérifie la date
+    });
+
+    if (dueCards.length === 0) return [];
+
+    const mergedCards = dueCards.map(card => ({
+      ...progressMap.get(card.id),
       ...card,
-      ...progressMap.get(card.id), // Ajoute les champs nextReview, interval, etc.
     }));
+
+    if (includeFuture) {
+      return mergedCards.sort((a, b) => {
+        const dateA = a.nextReview ? new Date(a.nextReview) : 0;
+        const dateB = b.nextReview ? new Date(b.nextReview) : 0;
+        return dateA - dateB;
+      });
+    }
 
     return mergedCards.sort(() => Math.random() - 0.5);
   };
 
-  const startReview = async (subjects = ['all']) => {
-    const toReview = await getCardsToReview(subjects);
+  const startReview = async (subjects = ['all'], options = {}) => {
+    const toReview = await getCardsToReview(subjects, options);
     if (toReview.length > 0) {
-      // setReviewMode(true); // Ceci est géré dans UIStateContext et déclenché depuis l'UI
+      //
     } else {
       toast.error("Aucune carte à réviser !");
     }
