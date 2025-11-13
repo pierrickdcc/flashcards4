@@ -1,5 +1,5 @@
 export const TABLE_NAMES = {
-  CARDS: 'flashcards',
+  CARDS: 'cards',
   SUBJECTS: 'subjects',
   COURSES: 'courses',
   USER_CARD_PROGRESS: 'user_card_progress',
