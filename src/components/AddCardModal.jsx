@@ -3,17 +3,25 @@ import toast from 'react-hot-toast';
 import { useDataSync } from '../context/DataSyncContext';
 import ModalWrapper from './ModalWrapper';
 
-const AddCardModal = ({ show, onClose }) => {
-  const { subjects, addCard } = useDataSync();
+const AddCardModal = ({ show, onClose, cardToEdit }) => {
+  const { subjects, addCard, updateCardWithSync } = useDataSync();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    if (show && subjects && subjects.length > 0 && !subject) {
-      setSubject(subjects[0].name);
+    if (cardToEdit) {
+      setQuestion(cardToEdit.question || '');
+      setAnswer(cardToEdit.answer || '');
+      setSubject(cardToEdit.subject || '');
+    } else {
+      setQuestion('');
+      setAnswer('');
+      if (subjects && subjects.length > 0) {
+        setSubject(subjects[0].name);
+      }
     }
-  }, [show, subjects, subject]);
+  }, [cardToEdit, show, subjects]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,14 +29,18 @@ const AddCardModal = ({ show, onClose }) => {
       toast.error('La question et la réponse sont obligatoires');
       return;
     }
-    addCard({ question: question.trim(), answer: answer.trim(), subject });
-    setQuestion('');
-    setAnswer('');
+
+    if (cardToEdit) {
+      updateCardWithSync(cardToEdit.id, { question: question.trim(), answer: answer.trim(), subject });
+    } else {
+      addCard({ question: question.trim(), answer: answer.trim(), subject });
+    }
+
     onClose();
   };
 
   return (
-    <ModalWrapper isOpen={show} onClose={onClose} title="Ajouter une carte">
+    <ModalWrapper isOpen={show} onClose={onClose} title={cardToEdit ? "Modifier la carte" : "Ajouter une carte"}>
       <div className="space-y-4">
         <div>
           <label htmlFor="question" className="label">Question</label>
@@ -71,7 +83,7 @@ const AddCardModal = ({ show, onClose }) => {
             onClick={handleSubmit}
             className="btn-primary"
           >
-            Ajouter
+            {cardToEdit ? 'Mettre à jour' : 'Ajouter'}
           </button>
           <button
             onClick={onClose}
