@@ -122,12 +122,13 @@ export const DataSyncProvider = ({ children }) => {
       const { data: cloudCards, error: cardsError } = await supabase.from(TABLE_NAMES.CARDS).select('*').eq('workspace_id', workspaceId).gte('updated_at', lastSyncTime);
       const { data: cloudSubjects, error: subjectsError } = await supabase.from(TABLE_NAMES.SUBJECTS).select('*').eq('workspace_id', workspaceId).gte('updated_at', lastSyncTime);
       const { data: cloudCourses, error: coursesError } = await supabase.from(TABLE_NAMES.COURSES).select('*').eq('workspace_id', workspaceId).gte('updated_at', lastSyncTime);
+      const { data: cloudProgress, error: progressError } = await supabase.from(TABLE_NAMES.USER_CARD_PROGRESS).select('*').eq('user_id', session.user.id).gte('updated_at', lastSyncTime);
 
-      if (cardsError || subjectsError || coursesError) {
-        throw cardsError || subjectsError || coursesError;
+      if (cardsError || subjectsError || coursesError || progressError) {
+        throw cardsError || subjectsError || coursesError || progressError;
       }
 
-      await db.transaction('rw', db.cards, db.subjects, db.courses, async () => {
+      await db.transaction('rw', db.cards, db.subjects, db.courses, db.user_card_progress, async () => {
         if (cloudCards.length > 0) {
             const formattedCards = cloudCards.map(formatCardFromSupabase);
             const cloudCardIds = formattedCards.map(c => c.id);
@@ -175,12 +176,28 @@ export const DataSyncProvider = ({ children }) => {
             }
             if (coursesToUpdate.length > 0) await db.courses.bulkPut(coursesToUpdate);
         }
+        if (cloudProgress.length > 0) {
+            const formattedProgress = cloudProgress.map(formatUserCardProgressFromSupabase);
+            const cloudProgressIds = formattedProgress.map(p => p.id);
+            const localProgress = await db.user_card_progress.where('id').anyOf(cloudProgressIds).toArray();
+            const localProgressMap = new Map(localProgress.map(p => [p.id, p]));
+            const progressToUpdate = [];
+
+            for (const remoteProgress of formattedProgress) {
+                const localP = localProgressMap.get(remoteProgress.id);
+                if (!localP || new Date(remoteProgress.updatedAt) > new Date(localP.updatedAt)) {
+                    progressToUpdate.push({ ...remoteProgress, isSynced: true });
+                }
+            }
+            if (progressToUpdate.length > 0) await db.user_card_progress.bulkPut(progressToUpdate);
+        }
     });
 
       // 1. Gérer les éléments non synchronisés d'abord
       const localUnsyncedCards = await db.cards.where('isSynced').equals(false).toArray();
       const localUnsyncedSubjects = await db.subjects.where('isSynced').equals(false).toArray();
       const localUnsyncedCourses = await db.courses.where('isSynced').equals(false).toArray();
+      const localUnsyncedProgress = await db.user_card_progress.where('isSynced').equals(false).toArray();
 
       // 2. Préparer les données pour Supabase
       // Pour les NOUVEAUX éléments (id 'local_...'), nous retirons l'ID
@@ -197,12 +214,38 @@ export const DataSyncProvider = ({ children }) => {
       const cardsToSync = localUnsyncedCards.map(c => formatForSupabase(c, formatCardForSupabase));
       const subjectsToSync = localUnsyncedSubjects.map(s => formatForSupabase(s, formatSubjectForSupabase));
       const coursesToSync = localUnsyncedCourses.map(c => formatForSupabase(c, formatCourseForSupabase));
+      const progressToSync = localUnsyncedProgress.map(p => formatForSupabase(p, formatUserCardProgressForSupabase));
 
       // 3. Envoyer les modifications à Supabase
       if (cardsToSync.length > 0) {
-        const { error } = await supabase.from(TABLE_NAMES.CARDS).upsert(cardsToSync);
+        const { data: syncedCards, error } = await supabase.from(TABLE_NAMES.CARDS).upsert(cardsToSync).select();
         if (error) throw error;
-        // Marquer comme synchronisé (ceux qui n'étaient que des mises à jour)
+
+        const newLocalCards = localUnsyncedCards.filter(c => c.id.startsWith('local_'));
+        if (newLocalCards.length > 0 && syncedCards?.length > 0) {
+          const formattedSyncedCards = syncedCards.map(formatCardFromSupabase);
+          const syncedCardMap = new Map(formattedSyncedCards.map(sc => [sc.question, sc]));
+
+          const localIdsToDelete = [];
+          const serverCardsToAdd = [];
+
+          newLocalCards.forEach(localCard => {
+            const correspondingServerCard = syncedCardMap.get(localCard.question);
+            if (correspondingServerCard) {
+              localIdsToDelete.push(localCard.id);
+              serverCardsToAdd.push({ ...correspondingServerCard, isSynced: true });
+            }
+          });
+
+          if (localIdsToDelete.length > 0) {
+            await db.transaction('rw', db.cards, async () => {
+              await db.cards.bulkDelete(localIdsToDelete);
+              await db.cards.bulkPut(serverCardsToAdd);
+            });
+          }
+        }
+
+        // Marquer comme synchronisé (uniquement les mises à jour, pas les créations)
         await db.cards.where('isSynced').equals(false).and(card => !card.id.startsWith('local_')).modify({ isSynced: true });
       }
       if (subjectsToSync.length > 0) {
@@ -215,16 +258,22 @@ export const DataSyncProvider = ({ children }) => {
         if (error) throw error;
         await db.courses.where('isSynced').equals(false).and(course => !course.id.startsWith('local_')).modify({ isSynced: true });
       }
+      if (progressToSync.length > 0) {
+        const { error } = await supabase.from(TABLE_NAMES.USER_CARD_PROGRESS).upsert(progressToSync);
+        if (error) throw error;
+        await db.user_card_progress.where('isSynced').equals(false).and(p => !p.id.startsWith('local_')).modify({ isSynced: true });
+      }
 
-      // 4. Nettoyer les ID locaux TEMPORAIRES (les vraies données reviendront via la souscription temps réel)
-      const localCardsWithTempId = await db.cards.where('id').startsWith('local_').toArray();
-      if(localCardsWithTempId.length > 0) await db.cards.bulkDelete(localCardsWithTempId.map(c => c.id));
-      
+      // 4. Nettoyer les ID locaux TEMPORAIRES
+      // Les cartes sont gérées via la transaction atomique ci-dessus
       const localSubjectsWithTempId = await db.subjects.where('id').startsWith('local_').toArray();
       if(localSubjectsWithTempId.length > 0) await db.subjects.bulkDelete(localSubjectsWithTempId.map(c => c.id));
 
       const localCoursesWithTempId = await db.courses.where('id').startsWith('local_').toArray();
       if(localCoursesWithTempId.length > 0) await db.courses.bulkDelete(localCoursesWithTempId.map(c => c.id));
+
+      const localProgressWithTempId = await db.user_card_progress.where('id').startsWith('local_').toArray();
+      if(localProgressWithTempId.length > 0) await db.user_card_progress.bulkDelete(localProgressWithTempId.map(p => p.id));
 
       // 5. Gérer les suppressions en attente
       const pendingDeletions = await db.deletionsPending.toArray();
@@ -244,26 +293,24 @@ export const DataSyncProvider = ({ children }) => {
       localStorage.setItem(LOCAL_STORAGE_KEYS.LAST_SYNC, now.toISOString());
       toast.dismiss();
       toast.success('Synchronisation terminée !');
+      return true;
 
     } catch (err) {
       console.error('Erreur de synchronisation:', err);
       toast.dismiss();
       toast.error(`Erreur de synchronisation: ${err.message}`);
+      return false;
     } finally {
       setIsSyncing(false);
     }
   };
 const formatCardFromSupabase = (card) => ({
   ...card,
-  nextReview: card.next_review,
-  easinessFactor: card.easiness_factor,
   updatedAt: card.updated_at
 });
 
 const formatCardForSupabase = (card) => ({
   ...card,
-  next_review: card.nextReview,
-  easiness_factor: card.easinessFactor,
   updated_at: card.updatedAt,
   user_id: session.user.id,
   workspace_id: card.workspace_id,
@@ -295,13 +342,28 @@ const formatCourseForSupabase = (course) => ({
   user_id: session.user.id,
 });
 
+const formatUserCardProgressFromSupabase = (progress) => ({
+  ...progress,
+  updatedAt: progress.updated_at,
+  nextReview: progress.next_review,
+  reviewCount: progress.review_count,
+  cardId: progress.card_id,
+  userId: progress.user_id,
+});
+
+const formatUserCardProgressForSupabase = (progress) => ({
+  ...progress,
+  updated_at: progress.updatedAt,
+  next_review: progress.nextReview,
+  review_count: progress.reviewCount,
+  card_id: progress.cardId,
+  user_id: progress.userId,
+});
+
   const addCard = async (card) => {
     const newCard = {
       ...card,
       id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      nextReview: new Date().toISOString(),
-      interval: 1,
-      reviewCount: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       workspace_id: workspaceId,
@@ -344,9 +406,6 @@ const formatCourseForSupabase = (course) => ({
           question: parts[0].trim(),
           answer: parts[1].trim(),
           subject: normalizeSubjectName(parts[2].trim()),
-          nextReview: new Date().toISOString(),
-          interval: 1,
-          reviewCount: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           workspace_id: workspaceId,
@@ -441,17 +500,35 @@ const formatCourseForSupabase = (course) => ({
   };
 
   const reviewCard = async (currentCard, quality) => {
-    const { nextReview, interval, easiness } = calculateNextReview(quality, currentCard.interval || 1, currentCard.easiness || 2.5);
-    const updated = {
-      ...currentCard,
-      nextReview,
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    let progress = await db.user_card_progress
+      .where({ card_id: currentCard.id, user_id: userId })
+      .first();
+
+    const { nextReview, interval, easiness } = calculateNextReview(
+      quality,
+      progress?.interval || 1,
+      progress?.easiness || 2.5
+    );
+
+    const updatedProgress = {
+      card_id: currentCard.id,
+      user_id: userId,
+      nextReview: nextReview.toISOString(),
       interval,
       easiness,
-      reviewCount: currentCard.reviewCount + 1,
+      reviewCount: (progress?.reviewCount || 0) + 1,
       updatedAt: new Date().toISOString(),
-      isSynced: false
+      isSynced: false,
     };
-    await db.cards.update(currentCard.id, updated);
+
+    if (progress) {
+      await db.user_card_progress.update(progress.id, updatedProgress);
+    } else {
+      await db.user_card_progress.add(updatedProgress);
+    }
 
     if (isOnline) {
       syncToCloud();
@@ -476,27 +553,51 @@ const formatCourseForSupabase = (course) => ({
   };
 
   const signOut = async () => {
-    await syncToCloud();
+    const syncSuccessful = await syncToCloud();
+    if (!syncSuccessful) {
+      // Le toast d'erreur est déjà affiché par syncToCloud en cas d'échec.
+      // On arrête simplement le processus de déconnexion ici.
+      return;
+    }
     await db.delete();
     await supabase.auth.signOut();
     localStorage.removeItem(LOCAL_STORAGE_KEYS.WORKSPACE_ID);
     window.location.reload();
   };
 
-  const getCardsToReview = (subject = 'all') => {
-    if (!cards) return [];
+  const getCardsToReview = async (subject = 'all') => {
+    const userId = session?.user?.id;
+    if (!userId || !cards) return [];
+
     const now = new Date();
-    let filtered = cards.filter(c => new Date(c.nextReview) <= now);
+    const userProgress = await db.user_card_progress
+      .where('user_id').equals(userId)
+      .and(p => new Date(p.nextReview) <= now)
+      .toArray();
+
+    if (userProgress.length === 0) return [];
+
+    const cardIdsToReview = userProgress.map(p => p.card_id);
+    let cardsToReview = await db.cards.where('id').anyOf(cardIdsToReview).toArray();
+
     if (subject !== 'all') {
-      filtered = filtered.filter(c => c.subject === subject);
+      cardsToReview = cardsToReview.filter(c => c.subject === subject);
     }
-    return filtered.sort(() => Math.random() - 0.5);
+
+    // Associer la progression à chaque carte pour le mode révision
+    const progressMap = new Map(userProgress.map(p => [p.card_id, p]));
+    const mergedCards = cardsToReview.map(card => ({
+      ...card,
+      ...progressMap.get(card.id), // Ajoute les champs nextReview, interval, etc.
+    }));
+
+    return mergedCards.sort(() => Math.random() - 0.5);
   };
 
-  const startReview = (subject = 'all') => {
-    const toReview = getCardsToReview(subject);
+  const startReview = async (subject = 'all') => {
+    const toReview = await getCardsToReview(subject);
     if (toReview.length > 0) {
-      setReviewMode(true);
+      // setReviewMode(true); // Ceci est géré dans UIStateContext et déclenché depuis l'UI
     } else {
       toast.error("Aucune carte à réviser !");
     }

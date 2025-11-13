@@ -11,9 +11,16 @@ const ConfigModal = ({ show, onClose }) => {
 
   const handleSave = async () => {
     if (localWorkspaceId !== workspaceId) {
+      const syncSuccessful = await syncToCloud();
+      if (!syncSuccessful) {
+        // Le toast d'erreur est déjà affiché par syncToCloud.
+        // On n'appelle pas onClose() pour garder la modale ouverte.
+        return;
+      }
       setWorkspaceId(localWorkspaceId);
       await db.delete();
       await db.open();
+      // On re-synchronise avec le nouveau workspace après avoir vidé le local.
       syncToCloud();
     }
     onClose();
