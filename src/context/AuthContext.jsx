@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../supabaseClient';
 import { LOCAL_STORAGE_KEYS } from '../constants/app';
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
