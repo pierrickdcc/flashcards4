@@ -24,6 +24,7 @@ const HomePage = ({
   startReview,
   selectedSubjects,
   cardsToReviewCount,
+  totalCards,
   view,
   setView,
   subjects,
@@ -70,6 +71,7 @@ const HomePage = ({
         <Actions
           startReview={startReview}
           cardsToReviewCount={cardsToReviewCount}
+          totalCards={totalCards}
         />
 
         <Filters
