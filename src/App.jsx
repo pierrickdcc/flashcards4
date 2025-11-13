@@ -1,35 +1,21 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useDataSync } from './context/DataSyncContext';
 import { useUIState } from './context/UIStateContext';
 import Auth from './components/Auth';
-import Header from './components/Header';
-import DeleteSubjectModal from './components/DeleteSubjectModal';
-import Stats from './components/Stats';
-import Actions from './components/Actions';
-import Filters from './components/Filters';
-import CardGrid from './components/CardGrid';
-import CardTable from './components/CardTable';
 import ReviewMode from './components/ReviewMode';
-import ConfigModal from './components/ConfigModal';
-import BulkAddModal from './components/BulkAddModal';
-import AddSubjectModal from './components/AddSubjectModal';
-import AddCardModal from './components/AddCardModal';
-import AddCourseModal from './components/AddCourseModal';
-import Dashboard from './components/Dashboard';
-import CourseViewer from './components/CourseViewer';
-import CourseList from './components/CourseList';
-import SignOutConfirmationModal from './components/SignOutConfirmationModal';
-import { Toaster } from 'react-hot-toast';
+import HomePage from './components/HomePage';
+import CoursePage from './components/CoursePage';
 import { DEFAULT_SUBJECT } from './constants/app';
+import toast from 'react-hot-toast';
 
 const App = () => {
   const { session, isConfigured } = useAuth();
   const {
     cards,
     subjects,
-    courses,
     deleteCardWithSync,
     updateCardWithSync,
     handleDeleteCardsOfSubject,
@@ -65,7 +51,6 @@ const App = () => {
   const [view, setView] = useState('courses');
   const [editingCard, setEditingCard] = useState(null);
   const [cardToEdit, setCardToEdit] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState(null);
   const [cardsToReviewCount, setCardsToReviewCount] = useState(0);
 
   useEffect(() => {
@@ -73,16 +58,13 @@ const App = () => {
       const toReview = await getCardsToReview(selectedSubjects);
       setCardsToReviewCount(toReview.length);
     };
-    fetchReviewCount();
-  }, [cards, selectedSubjects, getCardsToReview]);
+    if (session) {
+      fetchReviewCount();
+    }
+  }, [cards, selectedSubjects, getCardsToReview, session]);
 
   const handleEditCard = (card) => {
     setCardToEdit(card);
-    setShowAddCardModal(true);
-  };
-
-  const handleStartEdit = (card) => {
-    setEditingCard(card);
     setShowAddCardModal(true);
   };
 
@@ -138,15 +120,6 @@ const App = () => {
     return <Auth />;
   }
 
-  if (selectedCourse) {
-    return (
-      <CourseViewer
-        course={selectedCourse}
-        onClose={() => setSelectedCourse(null)}
-      />
-    );
-  }
-
   if (reviewMode) {
     return <ReviewMode />;
   }
@@ -156,99 +129,48 @@ const App = () => {
   };
 
   return (
-    <div>
-      <Toaster />
-      <Header
-        isConfigured={isConfigured}
-        setShowSignOutModal={setShowSignOutModal}
-      />
-
-      <main style={{ maxWidth: '80rem', margin: '0 auto', padding: '2rem 1rem' }}>
-        <Stats stats={stats} />
-        
-        <Actions
+    <Routes>
+      <Route path="/" element={
+        <HomePage
+          isConfigured={isConfigured}
+          setShowSignOutModal={setShowSignOutModal}
+          stats={stats}
           startReview={() => startReview(selectedSubjects)}
+          selectedSubjects={selectedSubjects}
           cardsToReviewCount={cardsToReviewCount}
-        />
-        
-        <Filters
           view={view}
           setView={setView}
           subjects={subjects || []}
-          onDeleteSubject={handleDeleteSubject}
+          handleDeleteSubject={handleDeleteSubject}
+          filteredCards={filteredCards}
+          handleEditCard={handleEditCard}
+          deleteCardWithSync={deleteCardWithSync}
+          editingCard={editingCard}
+          setEditingCard={setEditingCard}
+          updateCardWithSync={handleUpdateCard}
+          showConfigModal={showConfigModal}
+          setShowConfigModal={setShowConfigModal}
+          showBulkModal={showBulkModal}
+          setShowBulkModal={setShowBulkModal}
+          showAddSubjectModal={showAddSubjectModal}
+          setShowAddSubjectModal={setShowAddSubjectModal}
+          showAddCardModal={showAddCardModal}
+          setShowAddCardModal={setShowAddCardModal}
+          setCardToEdit={setCardToEdit}
+          cardToEdit={cardToEdit}
+          showAddCourseModal={showAddCourseModal}
+          setShowAddCourseModal={setShowAddCourseModal}
+          showDeleteSubjectModal={showDeleteSubjectModal}
+          setShowDeleteSubjectModal={setShowDeleteSubjectModal}
+          confirmDeleteSubject={confirmDeleteSubject}
+          confirmReassignSubject={confirmReassignSubject}
+          subjectToDelete={subjectToDelete}
+          showSignOutModal={showSignOutModal}
+          handleSignOut={handleSignOut}
         />
-
-        {view === 'courses' && (
-          <CourseList
-            onCourseSelect={setSelectedCourse}
-          />
-        )}
-        {view === 'cards' && (
-          <CardGrid
-            filteredCards={filteredCards}
-            setEditingCard={handleEditCard}
-            deleteCardWithSync={deleteCardWithSync}
-          />
-        )}
-        {view === 'table' && (
-          <CardTable
-            filteredCards={filteredCards}
-            editingCard={editingCard}
-            setEditingCard={setEditingCard}
-            updateCardWithSync={updateCardWithSync}
-            deleteCardWithSync={deleteCardWithSync}
-            subjects={subjects || []}
-          />
-        )}
-        {view === 'dashboard' && (
-          <Dashboard />
-        )}
-      </main>
-
-      {/* Modals */}
-      <ConfigModal
-        show={showConfigModal}
-        onClose={() => setShowConfigModal(false)}
-      />
-      
-      <BulkAddModal
-        show={showBulkModal}
-        onClose={() => setShowBulkModal(false)}
-      />
-      
-      <AddSubjectModal
-        show={showAddSubjectModal}
-        onClose={() => setShowAddSubjectModal(false)}
-      />
-
-      <AddCardModal
-        show={showAddCardModal}
-        onClose={() => {
-          setShowAddCardModal(false);
-          setCardToEdit(null);
-        }}
-        cardToEdit={cardToEdit}
-      />
-
-      <AddCourseModal
-        show={showAddCourseModal}
-        onClose={() => setShowAddCourseModal(false)}
-      />
-
-      <DeleteSubjectModal
-        show={showDeleteSubjectModal}
-        onClose={() => setShowDeleteSubjectModal(false)}
-        onDelete={confirmDeleteSubject}
-        onReassign={confirmReassignSubject}
-        subjectToDelete={subjectToDelete}
-      />
-
-      <SignOutConfirmationModal
-        show={showSignOutModal}
-        onClose={() => setShowSignOutModal(false)}
-        onConfirm={handleSignOut}
-      />
-    </div>
+      } />
+      <Route path="/course/:courseId" element={<CoursePage />} />
+    </Routes>
   );
 };
 

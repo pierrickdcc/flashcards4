@@ -82,7 +82,7 @@ const Header = () => {
             {showMenu && (
               <div className="dropdown-menu">
                 <div className="dropdown-header">
-                  <p className="font-semibold">{session?.user?.email}</p>
+                  <p className="font-semibold">{session?.user ? session.user.email : ''}</p>
                 </div>
                 <button className="dropdown-item" onClick={() => { setShowConfigModal(true); setShowMenu(false); }}>
                   Configuration

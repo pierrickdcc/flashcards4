@@ -31,7 +31,9 @@ const CardGrid = ({ filteredCards, setEditingCard, deleteCardWithSync }) => {
           <div className="flashcard-question">{card.question}</div>
           <div className="flashcard-answer">{card.answer}</div>
           <div className="flashcard-footer">
-            <span className="text-xs opacity-60">Prochaine révision: {new Date(card.nextReview).toLocaleDateString('fr-FR')}</span>
+            <span className="text-xs opacity-60">
+              Prochaine révision: {card.nextReview && !isNaN(new Date(card.nextReview)) ? new Date(card.nextReview).toLocaleDateString('fr-FR') : 'Jamais'}
+            </span>
             <span className="text-xs opacity-60">Révisions: {card.reviewCount}</span>
           </div>
         </div>

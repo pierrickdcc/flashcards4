@@ -67,34 +67,38 @@ const CourseList = ({ onCourseSelect }) => {
               {subject.name}
             </h2>
             {subjectCourses.length > 0 ? (
-              <motion.div className="overflow-x-auto" variants={itemVariants}>
-                <table className="w-full text-left table-auto">
-                  <thead className="border-b-2 border-gray-200 dark:border-gray-700">
+              <motion.div
+                className="glass-card table-container"
+                variants={itemVariants}
+              >
+                <table className="table">
+                  <thead>
                     <tr>
-                      <th className="p-4">Nom</th>
-                      <th className="p-4 w-48">Dernière modification</th>
-                      <th className="p-4 w-12"></th>
+                      <th>Nom</th>
+                      <th style={{ width: '150px' }}>Dernière modification</th>
+                      <th style={{ width: '50px' }}></th>
                     </tr>
                   </thead>
                   <tbody>
                     {subjectCourses.map(course => (
                       <motion.tr
                         key={course.id}
-                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                        className="cursor-pointer"
                         onClick={() => onCourseSelect(course)}
                         variants={itemVariants}
                         whileHover={{ scale: 1.01 }}
+                        style={{ display: 'table-row' }}
                       >
-                        <td className="p-4 font-medium flex items-center gap-3">
+                        <td className="font-medium flex items-center gap-3">
                           <FileText size={20} className="text-primary" />
                           {course.title}
                         </td>
-                        <td className="p-4 text-gray-500 dark:text-gray-400">
+                        <td className="text-gray-500 dark:text-gray-400">
                           {formatDate(course.updatedAt)}
                         </td>
-                        <td className="p-4">
+                        <td>
                           <button
-                            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                            className="icon-btn"
                             onClick={(e) => {
                               e.stopPropagation();
                               // Add functionality for more options here
