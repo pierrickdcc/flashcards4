@@ -7,20 +7,32 @@ import { useUIState } from '../context/UIStateContext';
 const ReviewMode = () => {
   const { getCardsToReview, reviewCard } = useDataSync();
   const { setReviewMode, selectedSubject } = useUIState();
-  const [cardsToReview, setCardsToReview] = useState(getCardsToReview(selectedSubject));
+  const [cardsToReview, setCardsToReview] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [direction, setDirection] = useState(0);
   const controls = useAnimation();
 
+  useEffect(() => {
+    const loadCards = async () => {
+      const toReview = await getCardsToReview(selectedSubject);
+      setCardsToReview(toReview);
+      setIsLoading(false);
+    };
+    loadCards();
+  }, [getCardsToReview, selectedSubject]);
+
   const currentCard = cardsToReview[currentIndex];
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      document.getElementById('review-card')?.focus();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [currentIndex]);
+    if (!isLoading && currentCard) {
+      const timer = setTimeout(() => {
+        document.getElementById('review-card')?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, isLoading, currentCard]);
 
   const handleAnswer = async (quality) => {
     await reviewCard(currentCard, quality);
@@ -58,13 +70,22 @@ const ReviewMode = () => {
     }
   };
 
+  useEffect(() => {
+    if (!isLoading && cardsToReview.length === 0) {
+      setReviewMode(false);
+    }
+  }, [isLoading, cardsToReview, setReviewMode]);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
+        <p className="dark:text-white">Chargement des cartes...</p>
+      </div>
+    );
+  }
+
   if (!currentCard) {
-    // This can happen if all cards are reviewed and the component hasn't been unmounted yet.
-    // Or if there were no cards to review in the first place.
-    useEffect(() => {
-        setReviewMode(false);
-    }, []);
-    return null;
+    return null; // Le useEffect ci-dessus s'occupera de fermer le mode révision
   }
 
   return (

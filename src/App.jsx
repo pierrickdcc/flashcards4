@@ -64,6 +64,15 @@ const App = () => {
   const [view, setView] = useState('courses');
   const [editingCard, setEditingCard] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [cardsToReviewCount, setCardsToReviewCount] = useState(0);
+
+  useEffect(() => {
+    const fetchReviewCount = async () => {
+      const toReview = await getCardsToReview(selectedSubject);
+      setCardsToReviewCount(toReview.length);
+    };
+    fetchReviewCount();
+  }, [cards, selectedSubject, getCardsToReview]);
 
 
   const handleDeleteSubject = (subjectName) => {
@@ -100,10 +109,9 @@ const App = () => {
     });
   }, [cards, selectedSubject, searchTerm]);
 
-  const cardsToReview = useMemo(() => getCardsToReview(selectedSubject), [cards, selectedSubject]);
   const stats = {
     total: cards?.length || 0,
-    toReview: cardsToReview.length,
+    toReview: cardsToReviewCount,
     subjects: subjects?.length || 0
   };
 
@@ -141,7 +149,7 @@ const App = () => {
         
         <Actions
           startReview={() => startReview(selectedSubject)}
-          cardsToReviewCount={cardsToReview.length}
+          cardsToReviewCount={cardsToReviewCount}
         />
         
         <Filters
