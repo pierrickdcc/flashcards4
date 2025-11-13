@@ -565,7 +565,7 @@ const formatUserCardProgressForSupabase = (progress) => ({
     window.location.reload();
   };
 
-  const getCardsToReview = async (subjects = ['all']) => {
+  const getCardsToReview = async (subjectsArray = ['all']) => {
     const userId = session?.user?.id;
     if (!userId || !cards) return [];
 
@@ -580,8 +580,8 @@ const formatUserCardProgressForSupabase = (progress) => ({
     const cardIdsToReview = userProgress.map(p => p.card_id);
     let cardsToReview = await db.cards.where('id').anyOf(cardIdsToReview).toArray();
 
-    if (!subjects.includes('all')) {
-      cardsToReview = cardsToReview.filter(c => subjects.includes(c.subject));
+    if (!subjectsArray.includes('all')) {
+      cardsToReview = cardsToReview.filter(c => subjectsArray.includes(c.subject));
     }
 
     // Associer la progression à chaque carte pour le mode révision

@@ -3,21 +3,23 @@ import toast from 'react-hot-toast';
 import { useDataSync } from '../context/DataSyncContext';
 import ModalWrapper from './ModalWrapper';
 
-const AddCardModal = ({ show, onClose, cardToEdit, onUpdate }) => {
-  const { subjects, addCard } = useDataSync();
+const AddCardModal = ({ show, onClose, cardToEdit }) => {
+  const { subjects, addCard, updateCardWithSync } = useDataSync();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
     if (cardToEdit) {
-      setQuestion(cardToEdit.question);
-      setAnswer(cardToEdit.answer);
-      setSubject(cardToEdit.subject);
+      setQuestion(cardToEdit.question || '');
+      setAnswer(cardToEdit.answer || '');
+      setSubject(cardToEdit.subject || '');
     } else {
       setQuestion('');
       setAnswer('');
-      setSubject(subjects && subjects.length > 0 ? subjects[0].name : '');
+      if (subjects && subjects.length > 0) {
+        setSubject(subjects[0].name);
+      }
     }
   }, [cardToEdit, show, subjects]);
 
@@ -28,13 +30,13 @@ const AddCardModal = ({ show, onClose, cardToEdit, onUpdate }) => {
       return;
     }
 
-    const cardData = { question: question.trim(), answer: answer.trim(), subject };
-
     if (cardToEdit) {
-      onUpdate(cardData);
+      updateCardWithSync(cardToEdit.id, { question: question.trim(), answer: answer.trim(), subject });
     } else {
-      addCard(cardData);
+      addCard({ question: question.trim(), answer: answer.trim(), subject });
     }
+
+    onClose();
   };
 
   return (
@@ -81,7 +83,7 @@ const AddCardModal = ({ show, onClose, cardToEdit, onUpdate }) => {
             onClick={handleSubmit}
             className="btn-primary"
           >
-            {cardToEdit ? "Mettre à jour" : "Ajouter"}
+            {cardToEdit ? 'Mettre à jour' : 'Ajouter'}
           </button>
           <button
             onClick={onClose}

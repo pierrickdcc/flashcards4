@@ -14,18 +14,17 @@ const Filters = ({ view, setView }) => {
     if (subjectName === 'all') {
       setSelectedSubjects(['all']);
     } else {
-      setSelectedSubjects(prev => {
-        const newSelection = prev.includes('all') ? [] : [...prev];
-        if (newSelection.includes(subjectName)) {
-          const filteredSelection = newSelection.filter(s => s !== subjectName);
-          if (filteredSelection.length === 0) {
-            return ['all'];
-          }
-          return filteredSelection;
-        } else {
-          return [...newSelection, subjectName];
-        }
-      });
+      const newSelectedSubjects = selectedSubjects.includes('all')
+        ? [subjectName]
+        : selectedSubjects.includes(subjectName)
+          ? selectedSubjects.filter((s) => s !== subjectName)
+          : [...selectedSubjects, subjectName];
+
+      if (newSelectedSubjects.length === 0) {
+        setSelectedSubjects(['all']);
+      } else {
+        setSelectedSubjects(newSelectedSubjects);
+      }
     }
   };
 

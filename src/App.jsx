@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import toast from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
 import { useDataSync } from './context/DataSyncContext';
 import { useUIState } from './context/UIStateContext';
@@ -65,6 +64,7 @@ const App = () => {
   // --- LOCAL UI STATE ---
   const [view, setView] = useState('courses');
   const [editingCard, setEditingCard] = useState(null);
+  const [cardToEdit, setCardToEdit] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [cardsToReviewCount, setCardsToReviewCount] = useState(0);
 
@@ -75,6 +75,11 @@ const App = () => {
     };
     fetchReviewCount();
   }, [cards, selectedSubjects, getCardsToReview]);
+
+  const handleEditCard = (card) => {
+    setCardToEdit(card);
+    setShowAddCardModal(true);
+  };
 
   const handleStartEdit = (card) => {
     setEditingCard(card);
@@ -181,7 +186,7 @@ const App = () => {
         {view === 'cards' && (
           <CardGrid
             filteredCards={filteredCards}
-            setEditingCard={handleStartEdit}
+            setEditingCard={handleEditCard}
             deleteCardWithSync={deleteCardWithSync}
           />
         )}
@@ -220,10 +225,9 @@ const App = () => {
         show={showAddCardModal}
         onClose={() => {
           setShowAddCardModal(false);
-          setEditingCard(null);
+          setCardToEdit(null);
         }}
-        cardToEdit={editingCard}
-        onUpdate={handleUpdateCard}
+        cardToEdit={cardToEdit}
       />
 
       <AddCourseModal

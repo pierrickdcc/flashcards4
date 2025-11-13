@@ -25,25 +25,9 @@ const CourseList = ({ onCourseSelect }) => {
     },
   };
 
-  const groupedData = useMemo(() => {
-    const allSubjects = subjects || [];
-    const allCourses = courses || [];
-
-    const courseMap = allCourses.reduce((acc, course) => {
-      const subjectName = course.subject || DEFAULT_SUBJECT;
-      if (!acc[subjectName]) acc[subjectName] = [];
-      acc[subjectName].push(course);
-      return acc;
-    }, {});
-
-    return allSubjects
-      .map(subject => ({
-        name: subject.name,
-        courses: courseMap[subject.name] || []
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-  }, [courses, subjects]);
+  const sortedSubjects = useMemo(() => {
+    return (subjects || []).sort((a, b) => a.name.localeCompare(b.name));
+  }, [subjects]);
 
   if (!subjects || subjects.length === 0) {
     return (
@@ -60,33 +44,35 @@ const CourseList = ({ onCourseSelect }) => {
       initial="hidden"
       animate="visible"
     >
-      {groupedData.map(group => (
-        <div key={group.name}>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 border-b-2 border-blue-500 pb-2">
-            {group.name}
-          </h2>
-          {group.courses.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {group.courses.map(course => (
-                <motion.button
-                  key={course.id}
-                  className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-left w-full h-full flex items-center justify-center text-center font-semibold text-gray-700 dark:text-gray-200"
-                  onClick={() => onCourseSelect(course)}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {course.title}
-                </motion.button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm opacity-70 italic pl-2">
-              Aucun cours dans cette matière pour le moment.
-            </p>
-          )}
-        </div>
-      ))}
+      {sortedSubjects.map(subject => {
+        const subjectCourses = (courses || []).filter(c => c.subject === subject.name);
+
+        return (
+          <div key={subject.id}>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 border-b-2 border-blue-500 pb-2">
+              {subject.name}
+            </h2>
+            {subjectCourses.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {subjectCourses.map(course => (
+                  <motion.button
+                    key={course.id}
+                    className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-left w-full h-full flex items-center justify-center text-center font-semibold text-gray-700 dark:text-gray-200"
+                    onClick={() => onCourseSelect(course)}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {course.title}
+                  </motion.button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">Aucun cours dans cette matière pour le moment</p>
+            )}
+          </div>
+        );
+      })}
     </motion.div>
   );
 };
