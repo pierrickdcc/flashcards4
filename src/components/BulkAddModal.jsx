@@ -26,7 +26,7 @@ const BulkAddModal = ({ show, onClose }) => {
         value={bulkAdd}
         onChange={(e) => setBulkAdd(e.target.value)}
         placeholder="Qu'est-ce qu'une cellule? / Unité de base du vivant / Sciences&#10;Capitale de la France? / Paris / Histoire"
-        className="input-base h-48 font-mono text-sm"
+        className="input h-80 font-mono text-sm"
       />
       <div className="flex gap-4 mt-6">
         <button
