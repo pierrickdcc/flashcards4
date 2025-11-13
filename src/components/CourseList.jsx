@@ -2,9 +2,8 @@
 import React, { useMemo } from 'react';
 import { useDataSync } from '../context/DataSyncContext';
 import { motion } from 'framer-motion';
-import { Folder, FileText } from 'lucide-react';
+import { Folder, FileText, MoreVertical, Clock } from 'lucide-react';
 import EmptyState from './EmptyState';
-import { DEFAULT_SUBJECT } from '../constants/app';
 
 const CourseList = ({ onCourseSelect }) => {
   const { courses, subjects } = useDataSync();
@@ -31,6 +30,16 @@ const CourseList = ({ onCourseSelect }) => {
     return (subjects || []).sort((a, b) => a.name.localeCompare(b.name));
   }, [subjects]);
 
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  };
+
   if (!subjects || subjects.length === 0) {
     return (
       <EmptyState
@@ -49,7 +58,8 @@ const CourseList = ({ onCourseSelect }) => {
       animate="visible"
     >
       {sortedSubjects.map(subject => {
-        const subjectCourses = (courses || []).filter(c => c.subject === subject.name);
+        const subjectCourses = (courses || []).filter(c => c.subject === subject.name)
+          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
         return (
           <div key={subject.id}>
@@ -57,20 +67,47 @@ const CourseList = ({ onCourseSelect }) => {
               {subject.name}
             </h2>
             {subjectCourses.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {subjectCourses.map(course => (
-                  <motion.button
-                    key={course.id}
-                    className="glass-card p-6 text-left w-full h-full flex items-center justify-center text-center font-semibold"
-                    onClick={() => onCourseSelect(course)}
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {course.title}
-                  </motion.button>
-                ))}
-              </div>
+              <motion.div className="overflow-x-auto" variants={itemVariants}>
+                <table className="w-full text-left table-auto">
+                  <thead className="border-b-2 border-gray-200 dark:border-gray-700">
+                    <tr>
+                      <th className="p-4">Nom</th>
+                      <th className="p-4 w-48">Dernière modification</th>
+                      <th className="p-4 w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subjectCourses.map(course => (
+                      <motion.tr
+                        key={course.id}
+                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                        onClick={() => onCourseSelect(course)}
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.01 }}
+                      >
+                        <td className="p-4 font-medium flex items-center gap-3">
+                          <FileText size={20} className="text-primary" />
+                          {course.title}
+                        </td>
+                        <td className="p-4 text-gray-500 dark:text-gray-400">
+                          {formatDate(course.updatedAt)}
+                        </td>
+                        <td className="p-4">
+                          <button
+                            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Add functionality for more options here
+                            }}
+                          >
+                            <MoreVertical size={20} />
+                          </button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
             ) : (
               <div className="py-4">
                 <EmptyState
