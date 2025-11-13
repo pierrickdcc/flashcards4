@@ -16,6 +16,7 @@ const Header = () => {
     debouncedSetSearchTerm,
   } = useUIState();
   const [showMenu, setShowMenu] = useState(false);
+  const [showNewMenu, setShowNewMenu] = useState(false);
 
   useEffect(() => {
     // Raccourcis clavier globaux
@@ -70,10 +71,22 @@ const Header = () => {
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <button className="btn-primary" onClick={() => setShowAddCardModal(true)}>
-            <Plus size={20} />
-            <span>Nouveau</span>
-          </button>
+          <div className="relative">
+            <button className="btn-primary" onClick={() => setShowNewMenu(!showNewMenu)}>
+              <Plus size={20} />
+              <span>Nouveau</span>
+            </button>
+            {showNewMenu && (
+              <div className="dropdown-menu">
+                <button className="dropdown-item" onClick={() => { setShowAddCardModal(true); setShowNewMenu(false); }}>
+                  Ajouter une carte
+                </button>
+                <button className="dropdown-item" onClick={() => { setShowAddCourseModal(true); setShowNewMenu(false); }}>
+                  Ajouter un cours
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="relative">
             <button className="avatar" onClick={() => setShowMenu(!showMenu)}>

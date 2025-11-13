@@ -9,15 +9,17 @@ const Stats = ({ stats }) => {
   ];
 
   return (
-    <div className="stats-grid mb-6">
-      {statItems.map((stat, idx) => (
-        <div key={idx} className="glass-card p-6 flex items-center justify-between">
-          <div className="text-sm font-medium opacity-70">{stat.label}</div>
-          <div className={`text-3xl font-bold stat-value-${stat.label.toLowerCase()}`}>
-            {stat.value}
+    <div className="glass-card p-6 mb-6">
+      <div className="stats-grid">
+        {statItems.map((stat, idx) => (
+          <div key={idx} className="flex items-center justify-between">
+            <div className="text-sm font-medium opacity-70">{stat.label}</div>
+            <div className={`text-3xl font-bold stat-value-${stat.label.toLowerCase()}`}>
+              {stat.value}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };
