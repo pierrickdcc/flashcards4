@@ -15,20 +15,6 @@ const Actions = ({ startReview, cardsToReviewCount }) => {
       >
         <Brain size={18} /> Réviser ({cardsToReviewCount})
       </button>
-      
-      <button
-        onClick={() => setShowAddCardModal(true)}
-        className="btn-secondary"
-      >
-        <FilePlus size={18} /> Ajouter une carte
-      </button>
-
-      <button
-        onClick={() => setShowAddCourseModal(true)}
-        className="btn-secondary"
-      >
-        <BookPlus size={18} /> Ajouter un cours
-      </button>
 
       <button
         onClick={() => setShowBulkAddModal(true)}
