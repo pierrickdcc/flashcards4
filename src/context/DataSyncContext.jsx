@@ -597,8 +597,8 @@ const formatUserCardProgressForSupabase = (progress) => ({
 
     const progressMap = new Map(userProgress.map(p => [p.card_id, p]));
     const mergedCards = cardsToReview.map(card => ({
-      ...card,
       ...progressMap.get(card.id),
+      ...card,
     }));
 
     if (includeFuture) {
