@@ -527,7 +527,10 @@ const formatUserCardProgressForSupabase = (progress) => ({
     if (progress) {
       await db.user_card_progress.update(progress.id, updatedProgress);
     } else {
-      await db.user_card_progress.add(updatedProgress);
+      await db.user_card_progress.add({
+        ...updatedProgress,
+        id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      });
     }
 
     if (isOnline) {
