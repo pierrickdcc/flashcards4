@@ -578,31 +578,35 @@ const formatUserCardProgressForSupabase = (progress) => ({
     if (!userId || !cards) return [];
 
     const now = new Date();
-    let userProgressQuery = db.user_card_progress.where('user_id').equals(userId);
+    const allUserProgress = await db.user_card_progress.where('user_id').equals(userId).toArray();
+    const progressMap = new Map(allUserProgress.map(p => [p.card_id, p]));
 
-    if (!includeFuture) {
-      userProgressQuery = userProgressQuery.and(p => new Date(p.nextReview) <= now);
-    }
-
-    const userProgress = await userProgressQuery.toArray();
-
-    if (userProgress.length === 0) return [];
-
-    const cardIdsToReview = userProgress.map(p => p.card_id);
-    let cardsToReview = await db.cards.where('id').anyOf(cardIdsToReview).toArray();
-
+    let cardsToReviewQuery = db.cards.toCollection();
     if (!subjectsArray.includes('all')) {
-      cardsToReview = cardsToReview.filter(c => subjectsArray.includes(c.subject));
+      cardsToReviewQuery = cardsToReviewQuery.filter(c => subjectsArray.includes(c.subject));
     }
+    const allCardsInFilter = await cardsToReviewQuery.toArray();
 
-    const progressMap = new Map(userProgress.map(p => [p.card_id, p]));
-    const mergedCards = cardsToReview.map(card => ({
+    const dueCards = allCardsInFilter.filter(card => {
+      const progress = progressMap.get(card.id);
+      if (!progress) return true; // C'est une nouvelle carte, elle est due
+      if (includeFuture) return true; // En mode "Révision Libre", on prend tout
+      return new Date(progress.nextReview) <= now; // Sinon, on vérifie la date
+    });
+
+    if (dueCards.length === 0) return [];
+
+    const mergedCards = dueCards.map(card => ({
       ...progressMap.get(card.id),
       ...card,
     }));
 
     if (includeFuture) {
-      return mergedCards.sort((a, b) => new Date(a.nextReview) - new Date(b.nextReview));
+      return mergedCards.sort((a, b) => {
+        const dateA = a.nextReview ? new Date(a.nextReview) : 0;
+        const dateB = b.nextReview ? new Date(b.nextReview) : 0;
+        return dateA - dateB;
+      });
     }
 
     return mergedCards.sort(() => Math.random() - 0.5);
