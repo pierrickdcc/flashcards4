@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useUIState } from '../context/UIStateContext';
-import { BookOpen, Search, Sun, Plus, User } from 'lucide-react';
+import { BookOpen, Search, Plus, User } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 const Header = () => {
   const { session } = useAuth();
@@ -68,15 +69,11 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="icon-btn">
-            <Sun size={20} />
+          <ThemeToggle />
+          <button className="btn-primary" onClick={() => setShowAddCardModal(true)}>
+            <Plus size={20} />
+            <span>Nouveau</span>
           </button>
-          <div className="relative">
-            <button className="btn-primary" onClick={() => setShowAddCardModal(true)}>
-              <Plus size={20} />
-              <span>Nouveau</span>
-            </button>
-          </div>
 
           <div className="relative">
             <button className="avatar" onClick={() => setShowMenu(!showMenu)}>

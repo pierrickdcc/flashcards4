@@ -1,13 +1,15 @@
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Inbox } from 'lucide-react';
+import EmptyState from './EmptyState';
 
 const CardGrid = ({ filteredCards, setEditingCard, deleteCardWithSync }) => {
   if (filteredCards.length === 0) {
     return (
-      <div className="text-center py-16 px-4 glass-card">
-        <h3 className="text-xl font-semibold">Aucune carte à afficher</h3>
-        <p className="opacity-70 mt-2">Ajoutez de nouvelles cartes ou sélectionnez une autre matière.</p>
-      </div>
+      <EmptyState
+        icon={Inbox}
+        title="Aucune carte à afficher"
+        message="Ajoutez de nouvelles cartes ou modifiez vos filtres de recherche."
+      />
     );
   }
 
