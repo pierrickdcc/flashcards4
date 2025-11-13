@@ -745,3 +745,21 @@ body.light .stat-value-matières {
 .capsule-yellow { background-color: #f59e0b; }
 .capsule-blue { background-color: #3b82f6; }
 .capsule-green { background-color: #22c55e; }
+
+/* Responsive Adjustments for Review Mode */
+@media (max-width: 640px) {
+  .flashcard {
+    height: 350px;
+    max-width: 90vw;
+  }
+
+  .difficulty-capsule {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .card-scene-container {
+    padding: 1rem;
+    gap: 1rem;
+  }
+}

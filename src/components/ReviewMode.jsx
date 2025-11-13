@@ -34,20 +34,29 @@ const ReviewMode = () => {
     }
   }, [currentIndex, isLoading, currentCard]);
 
-  const handleAnswer = async (quality) => {
+  const handleAnswer = async (e, quality) => {
+    e.stopPropagation(); // Empêche le clic de se propager à la carte
     await reviewCard(currentCard, quality);
-    
+
+    // Animation de sortie
+    await controls.start({
+      opacity: 0,
+      y: -50,
+      transition: { duration: 0.3 }
+    });
+
     if (currentIndex < cardsToReview.length - 1) {
-      setDirection(quality >= 3 ? 1 : -1);
-      await controls.start({
-        x: quality >= 3 ? 1000 : -1000,
-        opacity: 0,
-        transition: { duration: 0.3 }
-      });
-      setCurrentIndex(currentIndex + 1);
+      // Préparer pour la prochaine carte
       setShowAnswer(false);
-      setDirection(0);
-      controls.start({ x: 0, opacity: 1 });
+      setCurrentIndex(prevIndex => prevIndex + 1);
+
+      // Animation d'entrée
+      controls.set({ y: 50, opacity: 0 });
+      controls.start({
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.3, delay: 0.1 }
+      });
     } else {
       setReviewMode(false);
     }
@@ -90,62 +99,57 @@ const ReviewMode = () => {
 
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
-        <button
-          onClick={() => setReviewMode(false)}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        <div className="text-sm font-medium dark:text-white">
+      {/* Simplified Header */}
+      <div className="px-4 py-3 text-center">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
           {currentIndex + 1} / {cardsToReview.length}
           {isFreeReview && <span className="ml-2 text-gray-400">- Révision Libre</span>}
-        </div>
-        <div className="w-10" />
+        </span>
       </div>
 
-      {/* Card Scene */}
-      <div className="flex-1 flex items-center justify-center p-4 card-scene">
-        <motion.div
-          className="flashcard"
-          onClick={() => setShowAnswer(!showAnswer)}
-          animate={{ rotateY: showAnswer ? 180 : 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Front of the card (Question) */}
-          <div className="card-face card-face-front">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">
-              {currentCard.subject}
-            </div>
-            <div className="flex-1 flex items-center justify-center w-full">
-              <p className="text-3xl font-light text-center dark:text-white">
-                {currentCard.question}
-              </p>
-            </div>
-            <div className="absolute bottom-6 text-xs text-gray-400">
-              Cliquez pour révéler
-            </div>
-          </div>
-
-          {/* Back of the card (Answer + Difficulty) */}
-          <div className="card-face card-face-back">
-            <div className="flex-1 flex flex-col items-center justify-center w-full p-6">
-              <p className="text-2xl font-light text-center dark:text-white mb-8">
-                {currentCard.answer}
-              </p>
-              <div className="flex items-center justify-center gap-3 flex-wrap">
-                <button onClick={() => handleAnswer(1)} className="difficulty-capsule capsule-red">À revoir</button>
-                <button onClick={() => handleAnswer(2)} className="difficulty-capsule capsule-orange">Difficile</button>
-                <button onClick={() => handleAnswer(3)} className="difficulty-capsule capsule-yellow">Moyen</button>
-                <button onClick={() => handleAnswer(4)} className="difficulty-capsule capsule-blue">Facile</button>
-                <button onClick={() => handleAnswer(5)} className="difficulty-capsule capsule-green">Très facile</button>
+      {/* Card Scene and Difficulty Buttons */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 space-y-8">
+        <div className="card-scene">
+          <motion.div
+            className="flashcard"
+            onClick={() => setShowAnswer(!showAnswer)}
+            animate={{ ...controls, rotateY: showAnswer ? 180 : 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Front of the card (Question) */}
+            <div className="card-face card-face-front">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">
+                {currentCard.subject}
+              </div>
+              <div className="flex-1 flex items-center justify-center w-full">
+                <p className="text-3xl font-light text-center dark:text-white">
+                  {currentCard.question}
+                </p>
+              </div>
+              <div className="absolute bottom-6 text-xs text-gray-400">
+                Cliquez pour révéler
               </div>
             </div>
-          </div>
-        </motion.div>
+
+            {/* Back of the card (Answer) */}
+            <div className="card-face card-face-back">
+              <div className="flex-1 flex flex-col items-center justify-center w-full p-6">
+                <p className="text-2xl font-light text-center dark:text-white">
+                  {currentCard.answer}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Difficulty Buttons */}
+        <div className={`flex items-center justify-center gap-3 flex-wrap transition-opacity duration-300 ${showAnswer ? 'opacity-100' : 'opacity-0'}`}>
+          <button onClick={(e) => handleAnswer(e, 1)} className="difficulty-capsule capsule-red">À revoir</button>
+          <button onClick={(e) => handleAnswer(e, 2)} className="difficulty-capsule capsule-orange">Difficile</button>
+          <button onClick={(e) => handleAnswer(e, 3)} className="difficulty-capsule capsule-yellow">Moyen</button>
+          <button onClick={(e) => handleAnswer(e, 4)} className="difficulty-capsule capsule-blue">Facile</button>
+          <button onClick={(e) => handleAnswer(e, 5)} className="difficulty-capsule capsule-green">Très facile</button>
+        </div>
       </div>
     </div>
   );
