@@ -138,6 +138,7 @@ const App = () => {
           startReview={() => startReview(selectedSubjects)}
           selectedSubjects={selectedSubjects}
           cardsToReviewCount={cardsToReviewCount}
+          totalCards={stats.total}
           view={view}
           setView={setView}
           subjects={subjects || []}
