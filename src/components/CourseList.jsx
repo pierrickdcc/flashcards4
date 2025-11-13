@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { DEFAULT_SUBJECT } from '../constants/app';
 
 const CourseList = ({ onCourseSelect }) => {
-  const { courses } = useDataSync();
+  const { courses, subjects } = useDataSync();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -25,25 +25,30 @@ const CourseList = ({ onCourseSelect }) => {
     },
   };
 
-  // Grouper les cours par matière directement depuis les cours
-  const coursesBySubject = useMemo(() => {
-    return (courses || []).reduce((acc, course) => {
-      const subjectName = course.subject || DEFAULT_SUBJECT; // Utilise le sujet par défaut
-      if (!acc[subjectName]) {
-        acc[subjectName] = [];
-      }
+  const groupedData = useMemo(() => {
+    const allSubjects = subjects || [];
+    const allCourses = courses || [];
+
+    const courseMap = allCourses.reduce((acc, course) => {
+      const subjectName = course.subject || DEFAULT_SUBJECT;
+      if (!acc[subjectName]) acc[subjectName] = [];
       acc[subjectName].push(course);
       return acc;
     }, {});
-  }, [courses]);
 
-  // Obtenir les noms des matières à partir des groupes
-  const subjectNames = Object.keys(coursesBySubject).sort();
+    return allSubjects
+      .map(subject => ({
+        name: subject.name,
+        courses: courseMap[subject.name] || []
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
-  if (!courses || courses.length === 0) {
+  }, [courses, subjects]);
+
+  if (!subjects || subjects.length === 0) {
     return (
       <div className="py-16 text-center text-gray-500 dark:text-gray-400">
-        Aucun cours à afficher.
+        Aucune matière à afficher.
       </div>
     );
   }
@@ -55,17 +60,14 @@ const CourseList = ({ onCourseSelect }) => {
       initial="hidden"
       animate="visible"
     >
-      {subjectNames.map(subjectName => {
-        const subjectCourses = coursesBySubject[subjectName];
-        if (subjectCourses.length === 0) return null;
-
-        return (
-          <div key={subjectName}>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 border-b-2 border-blue-500 pb-2">
-              {subjectName}
-            </h2>
+      {groupedData.map(group => (
+        <div key={group.name}>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 border-b-2 border-blue-500 pb-2">
+            {group.name}
+          </h2>
+          {group.courses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {subjectCourses.map(course => (
+              {group.courses.map(course => (
                 <motion.button
                   key={course.id}
                   className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-left w-full h-full flex items-center justify-center text-center font-semibold text-gray-700 dark:text-gray-200"
@@ -78,9 +80,13 @@ const CourseList = ({ onCourseSelect }) => {
                 </motion.button>
               ))}
             </div>
-          </div>
-        );
-      })}
+          ) : (
+            <p className="text-sm opacity-70 italic pl-2">
+              Aucun cours dans cette matière pour le moment.
+            </p>
+          )}
+        </div>
+      ))}
     </motion.div>
   );
 };

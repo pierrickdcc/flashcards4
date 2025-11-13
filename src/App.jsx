@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
 import { useDataSync } from './context/DataSyncContext';
 import { useUIState } from './context/UIStateContext';
@@ -49,8 +51,8 @@ const App = () => {
     showAddCourseModal,
     setShowAddCourseModal,
     reviewMode,
-    selectedSubject,
-    setSelectedSubject,
+    selectedSubjects,
+    setSelectedSubjects,
     searchTerm,
     showSignOutModal, 
     setShowSignOutModal,
@@ -68,12 +70,24 @@ const App = () => {
 
   useEffect(() => {
     const fetchReviewCount = async () => {
-      const toReview = await getCardsToReview(selectedSubject);
+      const toReview = await getCardsToReview(selectedSubjects);
       setCardsToReviewCount(toReview.length);
     };
     fetchReviewCount();
-  }, [cards, selectedSubject, getCardsToReview]);
+  }, [cards, selectedSubjects, getCardsToReview]);
 
+  const handleStartEdit = (card) => {
+    setEditingCard(card);
+    setShowAddCardModal(true);
+  };
+
+  const handleUpdateCard = (updatedData) => {
+    if (!editingCard) return;
+    updateCardWithSync(editingCard.id, updatedData);
+    toast.success("Carte mise à jour !");
+    setShowAddCardModal(false);
+    setEditingCard(null);
+  };
 
   const handleDeleteSubject = (subjectName) => {
     setSubjectToDelete(subjectName);
@@ -84,14 +98,14 @@ const App = () => {
     handleDeleteCardsOfSubject(subjectToDelete);
     setShowDeleteSubjectModal(false);
     setSubjectToDelete(null);
-    setSelectedSubject('all');
+    setSelectedSubjects(['all']);
   };
 
   const confirmReassignSubject = () => {
     handleReassignCardsOfSubject(subjectToDelete);
     setShowDeleteSubjectModal(false);
     setSubjectToDelete(null);
-    setSelectedSubject(DEFAULT_SUBJECT);
+    setSelectedSubjects([DEFAULT_SUBJECT]);
   };
 
   const filteredCards = useMemo(() => {
@@ -99,7 +113,7 @@ const App = () => {
 
     const term = searchTerm?.toLowerCase().trim();
     return cards.filter(c => {
-      const matchesSubject = selectedSubject === 'all' || c.subject === selectedSubject;
+      const matchesSubject = selectedSubjects.includes('all') || selectedSubjects.includes(c.subject);
       if (!matchesSubject) return false;
 
       if (!term) return true;
@@ -107,7 +121,7 @@ const App = () => {
       const a = c.answer.toLowerCase();
       return q.includes(term) || a.includes(term);
     });
-  }, [cards, selectedSubject, searchTerm]);
+  }, [cards, selectedSubjects, searchTerm]);
 
   const stats = {
     total: cards?.length || 0,
@@ -148,7 +162,7 @@ const App = () => {
         <Stats stats={stats} />
         
         <Actions
-          startReview={() => startReview(selectedSubject)}
+          startReview={() => startReview(selectedSubjects)}
           cardsToReviewCount={cardsToReviewCount}
         />
         
@@ -167,7 +181,7 @@ const App = () => {
         {view === 'cards' && (
           <CardGrid
             filteredCards={filteredCards}
-            setEditingCard={setEditingCard}
+            setEditingCard={handleStartEdit}
             deleteCardWithSync={deleteCardWithSync}
           />
         )}
@@ -204,7 +218,12 @@ const App = () => {
 
       <AddCardModal
         show={showAddCardModal}
-        onClose={() => setShowAddCardModal(false)}
+        onClose={() => {
+          setShowAddCardModal(false);
+          setEditingCard(null);
+        }}
+        cardToEdit={editingCard}
+        onUpdate={handleUpdateCard}
       />
 
       <AddCourseModal

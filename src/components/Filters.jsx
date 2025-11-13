@@ -6,25 +6,53 @@ import { LayoutGrid, List, Play, BarChart3 } from 'lucide-react';
 const Filters = ({ view, setView }) => {
   const { subjects = [] } = useDataSync();
   const {
-    selectedSubject,
-    setSelectedSubject,
+    selectedSubjects,
+    setSelectedSubjects,
   } = useUIState();
+
+  const handleSubjectChange = (subjectName) => {
+    if (subjectName === 'all') {
+      setSelectedSubjects(['all']);
+    } else {
+      setSelectedSubjects(prev => {
+        const newSelection = prev.includes('all') ? [] : [...prev];
+        if (newSelection.includes(subjectName)) {
+          const filteredSelection = newSelection.filter(s => s !== subjectName);
+          if (filteredSelection.length === 0) {
+            return ['all'];
+          }
+          return filteredSelection;
+        } else {
+          return [...newSelection, subjectName];
+        }
+      });
+    }
+  };
 
   return (
     <div className="filters">
       <div className="flex items-center gap-4">
-        <select
-          className="select"
-          value={selectedSubject}
-          onChange={(e) => setSelectedSubject(e.target.value)}
-        >
-          <option value="all">Toutes les matières</option>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selectedSubjects.includes('all')}
+              onChange={() => handleSubjectChange('all')}
+            />
+            Toutes les matières
+          </label>
           {subjects.map((subject) => (
-            <option key={subject.id} value={subject.name}>
+            <label key={subject.id} className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedSubjects.includes(subject.name)}
+                onChange={() => handleSubjectChange(subject.name)}
+                disabled={selectedSubjects.includes('all')}
+              />
               {subject.name}
-            </option>
+            </label>
           ))}
-        </select>
+        </div>
 
         <div className="view-toggle">
           <button onClick={() => setView('cards')} className={view === 'cards' ? 'active' : ''}>

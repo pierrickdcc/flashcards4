@@ -565,7 +565,7 @@ const formatUserCardProgressForSupabase = (progress) => ({
     window.location.reload();
   };
 
-  const getCardsToReview = async (subject = 'all') => {
+  const getCardsToReview = async (subjects = ['all']) => {
     const userId = session?.user?.id;
     if (!userId || !cards) return [];
 
@@ -580,8 +580,8 @@ const formatUserCardProgressForSupabase = (progress) => ({
     const cardIdsToReview = userProgress.map(p => p.card_id);
     let cardsToReview = await db.cards.where('id').anyOf(cardIdsToReview).toArray();
 
-    if (subject !== 'all') {
-      cardsToReview = cardsToReview.filter(c => c.subject === subject);
+    if (!subjects.includes('all')) {
+      cardsToReview = cardsToReview.filter(c => subjects.includes(c.subject));
     }
 
     // Associer la progression à chaque carte pour le mode révision
@@ -594,8 +594,8 @@ const formatUserCardProgressForSupabase = (progress) => ({
     return mergedCards.sort(() => Math.random() - 0.5);
   };
 
-  const startReview = async (subject = 'all') => {
-    const toReview = await getCardsToReview(subject);
+  const startReview = async (subjects = ['all']) => {
+    const toReview = await getCardsToReview(subjects);
     if (toReview.length > 0) {
       // setReviewMode(true); // Ceci est géré dans UIStateContext et déclenché depuis l'UI
     } else {

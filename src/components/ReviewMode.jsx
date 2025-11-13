@@ -6,7 +6,7 @@ import { useUIState } from '../context/UIStateContext';
 
 const ReviewMode = () => {
   const { getCardsToReview, reviewCard } = useDataSync();
-  const { setReviewMode, selectedSubject } = useUIState();
+  const { setReviewMode, selectedSubjects } = useUIState();
   const [cardsToReview, setCardsToReview] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,12 +16,12 @@ const ReviewMode = () => {
 
   useEffect(() => {
     const loadCards = async () => {
-      const toReview = await getCardsToReview(selectedSubject);
+      const toReview = await getCardsToReview(selectedSubjects);
       setCardsToReview(toReview);
       setIsLoading(false);
     };
     loadCards();
-  }, [getCardsToReview, selectedSubject]);
+  }, [getCardsToReview, selectedSubjects]);
 
   const currentCard = cardsToReview[currentIndex];
 
