@@ -6,7 +6,7 @@ import { useUIState } from '../context/UIStateContext';
 
 const ReviewMode = () => {
   const { getCardsToReview, reviewCard } = useDataSync();
-  const { setReviewMode, selectedSubjects } = useUIState();
+  const { setReviewMode, selectedSubjects, isFreeReview } = useUIState();
   const [cardsToReview, setCardsToReview] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,12 +16,12 @@ const ReviewMode = () => {
 
   useEffect(() => {
     const loadCards = async () => {
-      const toReview = await getCardsToReview(selectedSubjects);
+      const toReview = await getCardsToReview(selectedSubjects, { includeFuture: isFreeReview });
       setCardsToReview(toReview);
       setIsLoading(false);
     };
     loadCards();
-  }, [getCardsToReview, selectedSubjects]);
+  }, [getCardsToReview, selectedSubjects, isFreeReview]);
 
   const currentCard = cardsToReview[currentIndex];
 
@@ -101,6 +101,7 @@ const ReviewMode = () => {
         </button>
         <div className="text-sm font-medium dark:text-white">
           {currentIndex + 1} / {cardsToReview.length}
+          {isFreeReview && <span className="ml-2 text-gray-400">- Révision Libre</span>}
         </div>
         <div className="w-10" />
       </div>

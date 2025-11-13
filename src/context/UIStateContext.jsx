@@ -13,6 +13,7 @@ export const UIStateProvider = ({ children }) => {
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+  const [isFreeReview, setIsFreeReview] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState(['all']);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState(VIEW_MODE.GRID);
@@ -44,6 +45,7 @@ export const UIStateProvider = ({ children }) => {
     showAddCardModal, setShowAddCardModal,
     showAddCourseModal, setShowAddCourseModal,
     reviewMode, setReviewMode,
+    isFreeReview, setIsFreeReview,
     selectedSubjects, setSelectedSubjects,
     searchTerm, setSearchTerm,
     viewMode, setViewMode,
