@@ -11,8 +11,8 @@ const Stats = ({ stats }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       {statItems.map((stat, idx) => (
-        <div key={idx} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.label}</div>
+        <div key={idx} className="glass-card p-6 flex items-center justify-between">
+          <div className="text-sm font-medium opacity-70">{stat.label}</div>
           <div className={`text-3xl font-bold ${stat.color}`}>
             {stat.value}
           </div>
