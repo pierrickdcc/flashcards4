@@ -81,6 +81,18 @@ const App = () => {
     setShowAddCardModal(true);
   };
 
+  const handleStartEdit = (card) => {
+    setEditingCard(card);
+    setShowAddCardModal(true);
+  };
+
+  const handleUpdateCard = (updatedData) => {
+    if (!editingCard) return;
+    updateCardWithSync(editingCard.id, updatedData);
+    toast.success("Carte mise à jour !");
+    setShowAddCardModal(false);
+    setEditingCard(null);
+  };
 
   const handleDeleteSubject = (subjectName) => {
     setSubjectToDelete(subjectName);
