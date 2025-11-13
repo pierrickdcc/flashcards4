@@ -517,10 +517,13 @@ const formatUserCardProgressForSupabase = (progress) => ({
       progress?.easiness || 2.5
     );
 
+    // Ensure nextReview is a Date object before calling toISOString
+    const nextReviewDate = nextReview instanceof Date ? nextReview : new Date(nextReview);
+
     const updatedProgress = {
       card_id: currentCard.id,
       user_id: userId,
-      nextReview: nextReview.toISOString(),
+      nextReview: nextReviewDate.toISOString(),
       interval,
       easiness,
       reviewCount: (progress?.reviewCount || 0) + 1,

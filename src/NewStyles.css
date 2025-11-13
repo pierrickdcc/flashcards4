@@ -684,9 +684,82 @@ body.light .stat-value-matières {
   color: #059669; /* green-600 */
 }
 
+/* Review Mode Header */
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.review-header .app-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.progress-bar-container {
+  flex-grow: 1;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+body.light .progress-bar-container {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+  border-radius: 9999px;
+  transition: width 0.3s ease-in-out;
+}
+
+.exit-button {
+  background: none;
+  border: none;
+  color: var(--text-muted-color);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.exit-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-heading-color);
+}
+
+body.light .exit-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.card-subject {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body.light .card-subject {
+  background: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.8);
+}
+
 /* New Review Mode Styles */
 .card-scene {
   perspective: 1000px;
+  width: 100%;
+  max-width: 600px;
 }
 
 .flashcard {
