@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { DataSyncProvider, useDataSync } from './DataSyncContext';
@@ -18,6 +19,13 @@ vi.mock('../db', () => ({
       where: vi.fn(() => ({
         equals: vi.fn(() => ({
           toArray: vi.fn().mockResolvedValue([]), // Simule aucune carte non synchronisée au début
+        })),
+      })),
+    },
+    user_card_progress: {
+      where: vi.fn(() => ({
+        equals: vi.fn(() => ({
+          toArray: vi.fn().mockResolvedValue([]),
         })),
       })),
     },
@@ -39,12 +47,20 @@ vi.mock('../db', () => ({
       add: vi.fn(),
       toArray: vi.fn().mockResolvedValue([]),
     },
+    transaction: vi.fn().mockImplementation(async (mode, ...args) => {
+      const tx = args.pop();
+      return await tx();
+    }),
   },
 }));
 
 // Mock Supabase
 const mockSupabaseUpsert = vi.fn().mockResolvedValue({ error: null });
-const mockSupabaseSelect = vi.fn().mockResolvedValue({ data: [], error: null });
+const mockSupabaseSelect = vi.fn().mockReturnValue({
+  eq: vi.fn().mockReturnValue({
+    gte: vi.fn().mockResolvedValue({ data: [], error: null }),
+  }),
+});
 
 vi.mock('../supabaseClient', () => ({
   supabase: {
@@ -91,14 +107,6 @@ describe('DataSyncContext', () => {
   beforeEach(async () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
-    // Simuler une session
-    const { useAuth: mockUseAuth } = vi.mocked(await import('./AuthContext'));
-    mockUseAuth.mockReturnValue({
-      session: { user: { id: 'test-user' } },
-      workspaceId: 'test-workspace',
-      isConfigured: true,
-      loading: false,
-    });
   });
 
   afterEach(() => {

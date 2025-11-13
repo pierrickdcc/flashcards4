@@ -367,7 +367,9 @@ const formatUserCardProgressForSupabase = (progress) => ({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       workspace_id: workspaceId,
-      isSynced: false
+      isSynced: false,
+      nextReview: new Date().toISOString(),
+      reviewCount: 0,
     };
     await db.cards.add(newCard);
     toast.success('Carte ajoutée !');
@@ -409,7 +411,9 @@ const formatUserCardProgressForSupabase = (progress) => ({
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           workspace_id: workspaceId,
-          isSynced: false
+          isSynced: false,
+          nextReview: new Date().toISOString(),
+          reviewCount: 0,
         };
       }
       return null;

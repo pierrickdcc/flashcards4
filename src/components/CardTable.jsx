@@ -76,7 +76,7 @@ const CardTable = ({
                 )}
               </td>
               <td>
-                {new Date(card.nextReview).toLocaleDateString('fr-FR')}
+                {card.nextReview && !isNaN(new Date(card.nextReview)) ? new Date(card.nextReview).toLocaleDateString('fr-FR') : 'Jamais'}
               </td>
               <td className="text-center">
                 {card.reviewCount}
