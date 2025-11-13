@@ -45,7 +45,7 @@ const Dashboard = () => {
       .sort((a, b) => {
         const scoreA = (a.reviewCount || 0) / (a.interval || 1);
         const scoreB = (b.reviewCount || 0) / (b.interval || 1);
-        return scoreB - scoreA;
+        return scoreB - a.scoreA;
       })
       .slice(0, 5);
 
@@ -54,16 +54,16 @@ const Dashboard = () => {
 
   if (!stats) {
     return (
-      <div className="text-center py-16 px-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Commencez à ajouter des cartes !</h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">Le tableau de bord affichera vos statistiques une fois que vous aurez du contenu.</p>
+      <div className="text-center py-16 px-4 glass-card">
+        <h2 className="text-2xl font-bold">Commencez à ajouter des cartes !</h2>
+        <p className="opacity-70 mt-2">Le tableau de bord affichera vos statistiques une fois que vous aurez du contenu.</p>
       </div>
     );
   }
 
   const ChartContainer = ({ title, children }) => (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{title}</h3>
+    <div className="glass-card p-6">
+      <h3 className="text-lg font-semibold mb-4">{title}</h3>
       {children}
     </div>
   );
@@ -71,16 +71,16 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total des cartes</h3>
-          <p className="text-3xl font-bold text-gray-800 dark:text-white mt-2">{cards.length}</p>
+        <div className="glass-card p-6">
+          <h3 className="text-sm font-medium opacity-70">Total des cartes</h3>
+          <p className="text-3xl font-bold mt-2">{cards.length}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">À réviser</h3>
+        <div className="glass-card p-6">
+          <h3 className="text-sm font-medium opacity-70">À réviser</h3>
           <p className="text-3xl font-bold text-yellow-500 mt-2">{stats.toReviewToday}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Matières</h3>
+        <div className="glass-card p-6">
+          <h3 className="text-sm font-medium opacity-70">Matières</h3>
           <p className="text-3xl font-bold text-green-500 mt-2">{subjects?.length || 0}</p>
         </div>
       </div>
@@ -89,12 +89,17 @@ const Dashboard = () => {
         <ChartContainer title="Prévisions de révision (7 prochains jours)">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.forecast}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
-              <XAxis dataKey="day" tick={{ fill: 'var(--text-secondary)' }} />
-              <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)' }} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+              <XAxis dataKey="day" tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <YAxis allowDecimals={false} tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <Tooltip
+                contentStyle={{
+                  background: 'rgba(30, 41, 59, 0.8)',
+                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                }}
+              />
               <Legend />
-              <Bar dataKey="a_reviser" fill="#8884d8" />
+              <Bar dataKey="a_reviser" fill="#3B82F6" />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -102,12 +107,17 @@ const Dashboard = () => {
         <ChartContainer title="Force par matière (intervalle moyen en jours)">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.strengthBySubject} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
-              <XAxis type="number" tick={{ fill: 'var(--text-secondary)' }} />
-              <YAxis type="category" dataKey="name" width={80} tick={{ fill: 'var(--text-secondary)' }} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+              <XAxis type="number" tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <YAxis type="category" dataKey="name" width={80} tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <Tooltip
+                contentStyle={{
+                  background: 'rgba(30, 41, 59, 0.8)',
+                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                }}
+              />
               <Legend />
-              <Bar dataKey="force" fill="#82ca9d" />
+              <Bar dataKey="force" fill="#10B981" />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -120,7 +130,12 @@ const Dashboard = () => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  background: 'rgba(30, 41, 59, 0.8)',
+                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -128,9 +143,9 @@ const Dashboard = () => {
         <ChartContainer title="Cartes difficiles (Top 5)">
           <ul className="space-y-3">
             {stats.difficultCards.map(card => (
-              <li key={card.id} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
-                <span className="text-sm font-medium text-gray-800 dark:text-white">{card.question}</span>
-                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">{card.subject}</span>
+              <li key={card.id} className="flex justify-between items-center p-2 rounded-md" style={{ background: 'rgba(255, 255, 255, 0.05)'}}>
+                <span className="text-sm font-medium">{card.question}</span>
+                <span className="subject-badge text-xs">{card.subject}</span>
               </li>
             ))}
           </ul>

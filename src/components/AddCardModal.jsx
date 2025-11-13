@@ -29,43 +29,57 @@ const AddCardModal = ({ show, onClose }) => {
 
   return (
     <ModalWrapper isOpen={show} onClose={onClose} title="Ajouter une carte">
-      <input
-        type="text"
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Question"
-        className="input-base"
-      />
-      <textarea
-        value={answer}
-        onChange={(e) => setAnswer(e.target.value)}
-        placeholder="Réponse"
-        className="input-base mt-4 h-24"
-      />
-      <select
-        value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-        className="input-base mt-4"
-      >
-        {(subjects || []).map((s) => (
-          <option key={s.id} value={s.name}>
-            {s.name}
-          </option>
-        ))}
-      </select>
-      <div className="flex gap-4 pt-6">
-        <button
-          onClick={handleSubmit}
-          className="btn-primary flex-1"
-        >
-          Ajouter
-        </button>
-        <button
-          onClick={onClose}
-          className="btn-secondary flex-1"
-        >
-          Annuler
-        </button>
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="question" className="label">Question</label>
+          <input
+            id="question"
+            type="text"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Question"
+            className="input"
+          />
+        </div>
+        <div>
+          <label htmlFor="answer" className="label">Réponse</label>
+          <textarea
+            id="answer"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="Réponse"
+            className="input h-24"
+          />
+        </div>
+        <div>
+          <label htmlFor="subject" className="label">Matière</label>
+          <select
+            id="subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="select"
+          >
+            {(subjects || []).map((s) => (
+              <option key={s.id} value={s.name}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex gap-4 pt-6">
+          <button
+            onClick={handleSubmit}
+            className="btn-primary"
+          >
+            Ajouter
+          </button>
+          <button
+            onClick={onClose}
+            className="btn-secondary"
+          >
+            Annuler
+          </button>
+        </div>
       </div>
     </ModalWrapper>
   );

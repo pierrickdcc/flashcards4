@@ -20,24 +20,28 @@ const AddSubjectModal = ({ show, onClose }) => {
 
   return (
     <ModalWrapper isOpen={show} onClose={onClose} title="Nouvelle matière">
-      <input
-        type="text"
-        value={newSubject}
-        onChange={(e) => setNewSubject(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder="Nom de la matière"
-        className="input-base"
-      />
+      <div>
+        <label htmlFor="subject-name" className="label">Nom de la matière</label>
+        <input
+          id="subject-name"
+          type="text"
+          value={newSubject}
+          onChange={(e) => setNewSubject(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Nom de la matière"
+          className="input"
+        />
+      </div>
       <div className="flex gap-4 mt-6">
         <button
           onClick={handleSubmit}
-          className="btn-primary flex-1"
+          className="btn-primary"
         >
           Ajouter
         </button>
         <button
           onClick={onClose}
-          className="btn-secondary flex-1"
+          className="btn-secondary"
         >
           Annuler
         </button>
