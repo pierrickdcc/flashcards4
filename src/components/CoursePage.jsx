@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDataSync } from '../context/DataSyncContext';
 import { ArrowLeft } from 'lucide-react';
 import Header from './Header'; // Re-using the header for consistency
+import { marked } from 'marked';
 
 const CoursePage = () => {
   const { courseId } = useParams();
@@ -38,7 +39,7 @@ const CoursePage = () => {
         <h1 className="text-4xl font-bold mb-8">{course.title}</h1>
         <div
           className="prose dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: course.content }}
+          dangerouslySetInnerHTML={{ __html: marked(course.content) }}
         />
       </main>
     </div>
