@@ -572,15 +572,19 @@ const formatUserCardProgressForSupabase = (progress) => ({
     window.location.reload();
   };
 
-  const getCardsToReview = async (subjectsArray = ['all']) => {
+  const getCardsToReview = async (subjectsArray = ['all'], options = {}) => {
+    const { includeFuture = false } = options;
     const userId = session?.user?.id;
     if (!userId || !cards) return [];
 
     const now = new Date();
-    const userProgress = await db.user_card_progress
-      .where('user_id').equals(userId)
-      .and(p => new Date(p.nextReview) <= now)
-      .toArray();
+    let userProgressQuery = db.user_card_progress.where('user_id').equals(userId);
+
+    if (!includeFuture) {
+      userProgressQuery = userProgressQuery.and(p => new Date(p.nextReview) <= now);
+    }
+
+    const userProgress = await userProgressQuery.toArray();
 
     if (userProgress.length === 0) return [];
 
@@ -591,20 +595,23 @@ const formatUserCardProgressForSupabase = (progress) => ({
       cardsToReview = cardsToReview.filter(c => subjectsArray.includes(c.subject));
     }
 
-    // Associer la progression à chaque carte pour le mode révision
     const progressMap = new Map(userProgress.map(p => [p.card_id, p]));
     const mergedCards = cardsToReview.map(card => ({
       ...card,
-      ...progressMap.get(card.id), // Ajoute les champs nextReview, interval, etc.
+      ...progressMap.get(card.id),
     }));
+
+    if (includeFuture) {
+      return mergedCards.sort((a, b) => new Date(a.nextReview) - new Date(b.nextReview));
+    }
 
     return mergedCards.sort(() => Math.random() - 0.5);
   };
 
-  const startReview = async (subjects = ['all']) => {
-    const toReview = await getCardsToReview(subjects);
+  const startReview = async (subjects = ['all'], options = {}) => {
+    const toReview = await getCardsToReview(subjects, options);
     if (toReview.length > 0) {
-      // setReviewMode(true); // Ceci est géré dans UIStateContext et déclenché depuis l'UI
+      //
     } else {
       toast.error("Aucune carte à réviser !");
     }
