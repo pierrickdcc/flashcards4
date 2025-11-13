@@ -6,7 +6,7 @@ const Actions = ({ startReview, cardsToReviewCount }) => {
   const { setShowBulkAddModal, setShowAddSubjectModal, setShowAddCardModal, setShowAddCourseModal } = useUIState();
 
   return (
-    <div className="flex flex-wrap items-center gap-4 my-6">
+    <div className="flex flex-wrap items-center gap-6 my-6">
       <button
         onClick={startReview}
         disabled={cardsToReviewCount === 0}

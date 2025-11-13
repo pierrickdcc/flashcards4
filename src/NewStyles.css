@@ -659,9 +659,8 @@ body.light .table tbody tr:hover {
 }
 
 /* Button Spacing */
-.btn-primary, .btn-secondary, .btn-danger, .icon-btn {
-  margin: 0 0.25rem;
-}
+/* This rule was causing issues with flexbox gap, so it has been removed. */
+/* The spacing is now handled by the gap property on the flex container. */
 
 /* Stat Colors */
 .stat-value-total {
