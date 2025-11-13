@@ -88,7 +88,7 @@ const TestComponent = () => {
 };
 
 describe('DataSyncContext', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     // Simuler une session

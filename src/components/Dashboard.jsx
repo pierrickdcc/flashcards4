@@ -70,18 +70,18 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+       <div className="stats-grid">
         <div className="glass-card p-6">
-          <h3 className="text-sm font-medium opacity-70">Total des cartes</h3>
-          <p className="text-3xl font-bold mt-2">{cards.length}</p>
+          <h3 className="text-sm font-medium text-muted">Total des cartes</h3>
+          <p className="text-3xl font-bold mt-2 stat-value-total">{cards.length}</p>
         </div>
         <div className="glass-card p-6">
-          <h3 className="text-sm font-medium opacity-70">À réviser</h3>
-          <p className="text-3xl font-bold text-yellow-500 mt-2">{stats.toReviewToday}</p>
+          <h3 className="text-sm font-medium text-muted">À réviser</h3>
+          <p className="text-3xl font-bold mt-2 stat-value-à">{stats.toReviewToday}</p>
         </div>
         <div className="glass-card p-6">
-          <h3 className="text-sm font-medium opacity-70">Matières</h3>
-          <p className="text-3xl font-bold text-green-500 mt-2">{subjects?.length || 0}</p>
+          <h3 className="text-sm font-medium text-muted">Matières</h3>
+          <p className="text-3xl font-bold mt-2 stat-value-matières">{subjects?.length || 0}</p>
         </div>
       </div>
 
@@ -89,13 +89,13 @@ const Dashboard = () => {
         <ChartContainer title="Prévisions de révision (7 prochains jours)">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.forecast}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-              <XAxis dataKey="day" tick={{ fill: 'currentColor', opacity: 0.7 }} />
-              <YAxis allowDecimals={false} tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+              <XAxis dataKey="day" tick={{ fill: 'var(--text-muted-color)' }} />
+              <YAxis allowDecimals={false} tick={{ fill: 'var(--text-muted-color)' }} />
               <Tooltip
                 contentStyle={{
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                  background: 'var(--background-glass)',
+                  borderColor: 'var(--border-color)'
                 }}
               />
               <Legend />
@@ -107,13 +107,13 @@ const Dashboard = () => {
         <ChartContainer title="Force par matière (intervalle moyen en jours)">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.strengthBySubject} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-              <XAxis type="number" tick={{ fill: 'currentColor', opacity: 0.7 }} />
-              <YAxis type="category" dataKey="name" width={80} tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+              <XAxis type="number" tick={{ fill: 'var(--text-muted-color)' }} />
+              <YAxis type="category" dataKey="name" width={80} tick={{ fill: 'var(--text-muted-color)' }} />
               <Tooltip
                 contentStyle={{
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                  background: 'var(--background-glass)',
+                  borderColor: 'var(--border-color)'
                 }}
               />
               <Legend />
@@ -132,8 +132,8 @@ const Dashboard = () => {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                  background: 'var(--background-glass)',
+                  borderColor: 'var(--border-color)'
                 }}
               />
             </PieChart>
