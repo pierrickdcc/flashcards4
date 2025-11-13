@@ -2,6 +2,8 @@
 import React, { useMemo } from 'react';
 import { useDataSync } from '../context/DataSyncContext';
 import { motion } from 'framer-motion';
+import { Folder, FileText } from 'lucide-react';
+import EmptyState from './EmptyState';
 import { DEFAULT_SUBJECT } from '../constants/app';
 
 const CourseList = ({ onCourseSelect }) => {
@@ -31,9 +33,11 @@ const CourseList = ({ onCourseSelect }) => {
 
   if (!subjects || subjects.length === 0) {
     return (
-      <div className="py-16 text-center text-gray-500 dark:text-gray-400">
-        Aucune matière à afficher.
-      </div>
+      <EmptyState
+        icon={Folder}
+        title="Aucune matière"
+        message="Commencez par créer une matière pour y organiser vos cours."
+      />
     );
   }
 
@@ -49,7 +53,7 @@ const CourseList = ({ onCourseSelect }) => {
 
         return (
           <div key={subject.id}>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 border-b-2 border-blue-500 pb-2">
+            <h2 className="text-2xl font-bold mb-4 border-b-2 border-primary pb-2">
               {subject.name}
             </h2>
             {subjectCourses.length > 0 ? (
@@ -57,10 +61,10 @@ const CourseList = ({ onCourseSelect }) => {
                 {subjectCourses.map(course => (
                   <motion.button
                     key={course.id}
-                    className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-left w-full h-full flex items-center justify-center text-center font-semibold text-gray-700 dark:text-gray-200"
+                    className="glass-card p-6 text-left w-full h-full flex items-center justify-center text-center font-semibold"
                     onClick={() => onCourseSelect(course)}
                     variants={itemVariants}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.05, y: -5 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     {course.title}
@@ -68,7 +72,13 @@ const CourseList = ({ onCourseSelect }) => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">Aucun cours dans cette matière pour le moment</p>
+              <div className="py-4">
+                <EmptyState
+                  icon={FileText}
+                  title="Aucun cours"
+                  message="Ajoutez votre premier cours dans cette matière."
+                />
+              </div>
             )}
           </div>
         );

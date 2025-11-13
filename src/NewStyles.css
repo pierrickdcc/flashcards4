@@ -15,6 +15,33 @@ background: #F9FAFB;
 color: #1f2937;
  }
 
+/* Global Text Colors */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-heading-color);
+}
+
+:root {
+  --text-heading-color: #e5e7eb;
+  --text-muted-color: #9ca3af;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --background-glass: rgba(30, 41, 59, 0.8);
+}
+
+body.light {
+  --text-heading-color: #1f2937;
+  --text-muted-color: #6b7280;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --background-glass: rgba(255, 255, 255, 0.8);
+}
+
+.text-muted {
+  color: var(--text-muted-color);
+}
+
+.border-default {
+  border-color: var(--border-color);
+}
+
 .app {
 min-height: 100vh;
 display: flex;
@@ -616,4 +643,43 @@ body.light .table tbody tr:hover {
 .table .actions-cell {
   display: flex;
   gap: 0.5rem;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Button Spacing */
+.btn-primary, .btn-secondary, .btn-danger, .icon-btn {
+  margin: 0 0.25rem;
+}
+
+/* Stat Colors */
+.stat-value-total {
+  color: #3B82F6; /* blue-500 */
+}
+.stat-value-à {
+  color: #F59E0B; /* yellow-500 */
+}
+.stat-value-matières {
+  color: #10B981; /* green-500 */
+}
+
+body.light .stat-value-total {
+  color: #2563EB; /* blue-600 */
+}
+body.light .stat-value-à {
+  color: #D97706; /* yellow-600 */
+}
+body.light .stat-value-matières {
+  color: #059669; /* green-600 */
 }

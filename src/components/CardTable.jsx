@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Edit, Trash2, Check, X } from 'lucide-react';
+import { Edit, Trash2, Check, X, Inbox } from 'lucide-react';
+import EmptyState from './EmptyState';
 
 const CardTable = ({
   filteredCards,
@@ -10,6 +11,16 @@ const CardTable = ({
   deleteCardWithSync,
   subjects
 }) => {
+  if (filteredCards.length === 0) {
+    return (
+      <EmptyState
+        icon={Inbox}
+        title="Aucune carte à afficher"
+        message="Ajoutez de nouvelles cartes ou modifiez vos filtres de recherche."
+      />
+    );
+  }
+
   return (
     <div className="table-container">
       <table className="table">

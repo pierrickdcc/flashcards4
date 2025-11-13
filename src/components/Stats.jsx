@@ -9,11 +9,11 @@ const Stats = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div className="stats-grid mb-6">
       {statItems.map((stat, idx) => (
         <div key={idx} className="glass-card p-6 flex items-center justify-between">
           <div className="text-sm font-medium opacity-70">{stat.label}</div>
-          <div className={`text-3xl font-bold ${stat.color}`}>
+          <div className={`text-3xl font-bold stat-value-${stat.label.toLowerCase()}`}>
             {stat.value}
           </div>
         </div>
