@@ -344,15 +344,23 @@ export const DataSyncProvider = ({ children }) => {
     }
   };
 const formatCardFromSupabase = (card) => ({
-  ...card,
-  updatedAt: card.updated_at
+  id: card.id,
+  question: card.question,
+  answer: card.answer,
+  subject_id: card.subject_id,
+  workspace_id: card.workspace_id,
+  updatedAt: card.updated_at,
+  // isSynced is handled during the sync logic
 });
 
 const formatCardForSupabase = (card) => ({
-  ...card,
-  updated_at: card.updatedAt,
-  user_id: session.user.id,
+  id: card.id,
+  question: card.question,
+  answer: card.answer,
+  subject_id: card.subject_id,
   workspace_id: card.workspace_id,
+  updated_at: card.updatedAt || new Date().toISOString(),
+  user_id: session.user.id,
 });
 
 const formatSubjectFromSupabase = (subject) => ({
@@ -456,20 +464,48 @@ const formatUserCardProgressForSupabase = (progress) => ({
 
   const handleBulkAdd = async (bulkAdd) => {
     const lines = bulkAdd.trim().split('\n');
+    const uniqueSubjectNames = [...new Set(
+      lines.map(line => {
+        const parts = line.split('/');
+        return parts.length >= 3 ? normalizeSubjectName(parts[2].trim()) : null;
+      }).filter(Boolean)
+    )];
+
+    const existingSubjects = await db.subjects.where('name').anyOf(uniqueSubjectNames).toArray();
+    const existingSubjectMap = new Map(existingSubjects.map(s => [s.name, s.id]));
+
+    const newSubjectsToCreate = uniqueSubjectNames
+      .filter(name => !existingSubjectMap.has(name))
+      .map(name => ({
+        name,
+        workspace_id: workspaceId,
+        id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        isSynced: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+
+    if (newSubjectsToCreate.length > 0) {
+      await db.subjects.bulkAdd(newSubjectsToCreate);
+      newSubjectsToCreate.forEach(s => existingSubjectMap.set(s.name, s.id));
+    }
+
     const newCards = lines.map((line, idx) => {
       const parts = line.split('/');
       if (parts.length >= 3) {
+        const subjectName = normalizeSubjectName(parts[2].trim());
+        const subject_id = existingSubjectMap.get(subjectName);
+        if (!subject_id) return null; // Should not happen
+
         return {
           id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${idx}`,
           question: parts[0].trim(),
           answer: parts[1].trim(),
-          subject: normalizeSubjectName(parts[2].trim()),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          subject_id: subject_id,
           workspace_id: workspaceId,
           isSynced: false,
-          nextReview: new Date().toISOString(),
-          reviewCount: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
       }
       return null;
@@ -517,46 +553,52 @@ const formatUserCardProgressForSupabase = (progress) => ({
     }
   };
 
-  const handleDeleteCardsOfSubject = async (subjectName) => {
-    const cardsToDelete = await db.cards.where('subject').equalsIgnoreCase(subjectName).toArray();
-    const subjectToDelete = await db.subjects.where('name').equalsIgnoreCase(subjectName).first();
+  const handleDeleteCardsOfSubject = async (subjectId) => {
+    const subjectToDelete = await db.subjects.get(subjectId);
+    if (!subjectToDelete) return;
 
-    if (subjectToDelete) {
-      // CORRECTION ICI
-      await db.deletionsPending.add({ id: subjectToDelete.id, tableName: TABLE_NAMES.SUBJECTS });
-      await db.subjects.delete(subjectToDelete.id);
-    }
+    const cardsToDelete = await db.cards.where('subject_id').equals(subjectId).toArray();
+
+    // Marquer la matière pour suppression dans Supabase
+    await db.deletionsPending.add({ id: subjectId, tableName: TABLE_NAMES.SUBJECTS });
+    // Supprimer la matière localement
+    await db.subjects.delete(subjectId);
 
     if (cardsToDelete.length > 0) {
-      // CORRECTION ICI
-      const deletions = cardsToDelete.map(c => ({ id: c.id, tableName: TABLE_NAMES.CARDS }));
+      const cardIdsToDelete = cardsToDelete.map(c => c.id);
+      const deletions = cardIdsToDelete.map(id => ({ id, tableName: TABLE_NAMES.CARDS }));
+
+      // Marquer les cartes pour suppression dans Supabase
       await db.deletionsPending.bulkAdd(deletions);
-      await db.cards.bulkDelete(cardsToDelete.map(c => c.id));
+      // Supprimer les cartes localement
+      await db.cards.bulkDelete(cardIdsToDelete);
     }
 
-    toast.success(`Matière "${subjectName}" et toutes ses cartes supprimées.`);
-
-    if (isOnline) {
-      syncToCloud();
-    }
+    toast.success(`Matière "${subjectToDelete.name}" et ses cartes supprimées.`);
+    if (isOnline) syncToCloud();
   };
 
-  const handleReassignCardsOfSubject = async (subjectName) => {
-    const subjectToDelete = await db.subjects.where('name').equalsIgnoreCase(subjectName).first();
+  const handleReassignCardsOfSubject = async (subjectId) => {
+    const subjectToDelete = await db.subjects.get(subjectId);
+    if (!subjectToDelete) return;
 
-    await db.cards.where('subject').equalsIgnoreCase(subjectName).modify({ subject: DEFAULT_SUBJECT, isSynced: false });
-
-    if (subjectToDelete) {
-      // CORRECTION ICI
-      await db.deletionsPending.add({ id: subjectToDelete.id, tableName: TABLE_NAMES.SUBJECTS });
-      await db.subjects.delete(subjectToDelete.id);
+    // Trouver la matière "Non classé" pour obtenir son ID
+    const defaultSubject = await db.subjects.where('name').equalsIgnoreCase(DEFAULT_SUBJECT).first();
+    if (!defaultSubject) {
+      toast.error(`La matière par défaut "${DEFAULT_SUBJECT}" n'a pas été trouvée.`);
+      return;
     }
+
+    // Mettre à jour les cartes pour pointer vers l'ID de la matière par défaut
+    await db.cards.where('subject_id').equals(subjectId).modify({ subject_id: defaultSubject.id, isSynced: false });
+
+    // Marquer l'ancienne matière pour suppression dans Supabase
+    await db.deletionsPending.add({ id: subjectId, tableName: TABLE_NAMES.SUBJECTS });
+    // Supprimer l'ancienne matière localement
+    await db.subjects.delete(subjectId);
 
     toast.success(`Cartes réassignées à "${DEFAULT_SUBJECT}".`);
-
-    if (isOnline) {
-      syncToCloud();
-    }
+    if (isOnline) syncToCloud();
   };
 
   const reviewCard = async (cardId, rating) => {
@@ -665,7 +707,7 @@ const formatUserCardProgressForSupabase = (progress) => ({
     window.location.reload();
   };
 
-  const getCardsToReview = async (subjectsArray = ['all'], options = {}) => {
+  const getCardsToReview = async (subjectIds = ['all'], options = {}) => {
     const { includeFuture = false } = options;
     const userId = session?.user?.id;
     if (!userId) return [];
@@ -675,9 +717,11 @@ const formatUserCardProgressForSupabase = (progress) => ({
     const progressMap = new Map(allUserProgress.map(p => [p.card_id, p]));
 
     let cardsToReviewQuery = db.cards.toCollection();
-    if (!subjectsArray.includes('all')) {
-      cardsToReviewQuery = cardsToReviewQuery.filter(c => subjectsArray.includes(c.subject));
+    // 'all' est un ID spécial que l'UI envoie, on ne filtre pas dans ce cas
+    if (subjectIds.length > 0 && !subjectIds.includes('all')) {
+      cardsToReviewQuery = cardsToReviewQuery.where('subject_id').anyOf(subjectIds);
     }
+
     const allCardsInFilter = await cardsToReviewQuery.toArray();
 
     const dueCards = allCardsInFilter.filter(card => {

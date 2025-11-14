@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Edit, Trash2, Inbox } from 'lucide-react';
 import EmptyState from './EmptyState';
 
-const CardGrid = ({ filteredCards, setEditingCard, deleteCardWithSync }) => {
+const CardGrid = ({ filteredCards, setEditingCard, deleteCardWithSync, subjects }) => {
+  const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s.name])), [subjects]);
+
   if (filteredCards.length === 0) {
     return (
       <EmptyState
@@ -18,7 +20,7 @@ const CardGrid = ({ filteredCards, setEditingCard, deleteCardWithSync }) => {
       {filteredCards.map(card => (
         <div key={card.id} className="glass-card flashcard">
           <div className="flashcard-header">
-            <span className="subject-badge">{card.subject}</span>
+            <span className="subject-badge">{subjectMap.get(card.subject_id) || 'N/A'}</span>
             <div className="flex gap-2">
               <button onClick={() => setEditingCard(card)} className="icon-btn" title="Modifier">
                 <Edit size={16} />

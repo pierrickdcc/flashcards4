@@ -1,17 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDataSync } from '../context/DataSyncContext';
 import { useUIState } from '../context/UIStateContext';
 import { X, CheckCircle } from 'lucide-react';
 
 const ReviewMode = () => {
-  const { reviewCard } = useDataSync();
+  const { reviewCard, subjects } = useDataSync();
   const { setReviewMode, reviewCards } = useUIState();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
 
+  const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s.name])), [subjects]);
   const currentCard = reviewCards[currentIndex];
 
   const handleAnswer = async (rating) => {
@@ -62,6 +63,7 @@ const ReviewMode = () => {
   }
 
   const progressPercentage = reviewCards.length > 0 ? ((currentIndex + 1) / reviewCards.length) * 100 : 0;
+  const currentSubjectName = subjectMap.get(currentCard.subject_id) || 'N/A';
 
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col p-4 sm:p-6 md:p-8">
@@ -109,7 +111,7 @@ const ReviewMode = () => {
               >
                 {/* Front */}
                 <div className="card-face-new card-face-front-new">
-                   <span className="card-subject-new">{currentCard.subject}</span>
+                   <span className="card-subject-new">{currentSubjectName}</span>
                   <p className="text-3xl md:text-4xl font-light text-center text-gray-800">
                     {currentCard.question}
                   </p>
@@ -117,7 +119,7 @@ const ReviewMode = () => {
                 </div>
                 {/* Back */}
                 <div className="card-face-new card-face-back-new">
-                  <span className="card-subject-new">{currentCard.subject}</span>
+                  <span className="card-subject-new">{currentSubjectName}</span>
                   <p className="text-2xl md:text-3xl font-light text-center text-gray-800">
                     {currentCard.answer}
                   </p>

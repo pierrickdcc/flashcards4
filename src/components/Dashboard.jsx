@@ -9,9 +9,11 @@ const Dashboard = () => {
   const { cards, subjects } = useDataSync();
 
   const stats = useMemo(() => {
-    if (!cards || cards.length === 0) {
+    if (!cards || cards.length === 0 || !subjects) {
       return null;
     }
+
+    const subjectMap = new Map(subjects.map(s => [s.id, s.name]));
 
     // 1. Review Forecast for the next 7 days
     const forecast = Array(7).fill(0).map((_, i) => {
@@ -26,7 +28,7 @@ const Dashboard = () => {
 
     // 2. Strength by Subject (average interval)
     const strengthBySubject = (subjects || []).map(subject => {
-      const subjectCards = cards.filter(c => c.subject === subject.name);
+      const subjectCards = cards.filter(c => c.subject_id === subject.id);
       if (subjectCards.length === 0) {
         return { name: subject.name, force: 0 };
       }
@@ -37,7 +39,7 @@ const Dashboard = () => {
     // 3. Card Distribution
     const cardDistribution = (subjects || []).map(subject => ({
       name: subject.name,
-      value: cards.filter(c => c.subject === subject.name).length
+      value: cards.filter(c => c.subject_id === subject.id).length
     })).filter(s => s.value > 0);
 
     // 4. Difficult Cards
@@ -45,11 +47,11 @@ const Dashboard = () => {
       .sort((a, b) => {
         const scoreA = (a.reviewCount || 0) / (a.interval || 1);
         const scoreB = (b.reviewCount || 0) / (b.interval || 1);
-        return scoreB - a.scoreA;
+        return scoreB - scoreA; // Corrected the logic here
       })
       .slice(0, 5);
 
-    return { forecast, toReviewToday, strengthBySubject, cardDistribution, difficultCards };
+    return { forecast, toReviewToday, strengthBySubject, cardDistribution, difficultCards, subjectMap };
   }, [cards, subjects]);
 
   if (!stats) {
@@ -145,7 +147,7 @@ const Dashboard = () => {
             {stats.difficultCards.map(card => (
               <li key={card.id} className="flex justify-between items-center p-2 rounded-md" style={{ background: 'rgba(255, 255, 255, 0.05)'}}>
                 <span className="text-sm font-medium">{card.question}</span>
-                <span className="subject-badge text-xs">{card.subject}</span>
+                <span className="subject-badge text-xs">{stats.subjectMap.get(card.subject_id) || 'N/A'}</span>
               </li>
             ))}
           </ul>
