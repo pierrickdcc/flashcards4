@@ -34,7 +34,7 @@ const ModalWrapper = ({ isOpen, onClose, children, title }) => {
         <div ref={modalRef} className="modal-content" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2 className="text-2xl font-bold">{title}</h2>
-            <button onClick={onClose} className="icon-btn">
+            <button onClick={onClose} className="icon-btn" aria-label="Close modal">
               <X size={20} />
             </button>
           </div>
