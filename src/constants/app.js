@@ -2,6 +2,7 @@ export const TABLE_NAMES = {
   CARDS: 'cards',
   SUBJECTS: 'subjects',
   COURSES: 'courses',
+  MEMOS: 'memos',
   USER_CARD_PROGRESS: 'user_card_progress',
   DELETIONS_PENDING: 'deletionsPending',
 };
