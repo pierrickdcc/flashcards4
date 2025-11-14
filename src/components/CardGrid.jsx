@@ -1,16 +1,16 @@
 import React, { useMemo } from 'react';
-import { Edit, Trash2, Inbox } from 'lucide-react';
+import { Edit, Trash2, Inbox, Clock, Repeat } from 'lucide-react';
 import EmptyState from './EmptyState';
 
 const CardGrid = ({ filteredCards, setEditingCard, deleteCardWithSync, subjects }) => {
   const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s.name])), [subjects]);
 
-  if (filteredCards.length === 0) {
+  if (!filteredCards || filteredCards.length === 0) {
     return (
       <EmptyState
         icon={Inbox}
-        title="Aucune carte à afficher"
-        message="Ajoutez de nouvelles cartes ou modifiez vos filtres de recherche."
+        title="Aucune flashcard trouvée"
+        message="Commencez par ajouter une nouvelle carte ou ajustez vos filtres."
       />
     );
   }
@@ -18,25 +18,31 @@ const CardGrid = ({ filteredCards, setEditingCard, deleteCardWithSync, subjects 
   return (
     <div className="card-grid">
       {filteredCards.map(card => (
-        <div key={card.id} className="glass-card flashcard">
+        <div key={card.id} className="flashcard">
           <div className="flashcard-header">
-            <span className="subject-badge">{subjectMap.get(card.subject_id) || 'N/A'}</span>
-            <div className="flex gap-2">
+            <span className="subject-badge">
+              {subjectMap.get(card.subject_id) || 'N/A'}
+            </span>
+            <div className="flashcard-actions">
               <button onClick={() => setEditingCard(card)} className="icon-btn" title="Modifier">
                 <Edit size={16} />
               </button>
-              <button onClick={() => deleteCardWithSync(card.id)} className="icon-btn" style={{ color: '#ef4444' }} title="Supprimer">
+              <button onClick={() => deleteCardWithSync(card.id)} className="icon-btn danger" title="Supprimer">
                 <Trash2 size={16} />
               </button>
             </div>
           </div>
-          <div className="flashcard-question">{card.question}</div>
-          <div className="flashcard-answer">{card.answer}</div>
+          <div className="flashcard-q">{card.front}</div>
+          <div className="flashcard-a">{card.back}</div>
           <div className="flashcard-footer">
-            <span className="text-xs opacity-60">
-              Prochaine révision: {card.nextReview && !isNaN(new Date(card.nextReview)) ? new Date(card.nextReview).toLocaleDateString('fr-FR') : 'Jamais'}
-            </span>
-            <span className="text-xs opacity-60">Révisions: {card.reviewCount}</span>
+            <div className="flex items-center gap-2">
+              <Clock size={12} />
+              <span>Proch. révision: {card.next_review_date ? new Date(card.next_review_date).toLocaleDateString('fr-FR') : 'Jamais'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+               <Repeat size={12} />
+               <span>Révisions: {card.review_count || 0}</span>
+            </div>
           </div>
         </div>
       ))}

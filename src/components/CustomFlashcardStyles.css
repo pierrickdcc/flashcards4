@@ -1,0 +1,116 @@
+
+/* === STYLES SPÉCIFIQUES POUR LA PAGE FLASHCARDS ET LE MODAL D'AJOUT === */
+/* Ces styles sont basés sur les maquettes fournies et ne s'appliquent qu'aux composants concernés. */
+
+:root {
+    /* Définition de variables locales pour ne pas écraser les globales si elles existent déjà */
+    --fc-background-body: #101114;
+    --fc-background-card: #1C1E23;
+    --fc-border-color: rgba(255, 255, 255, 0.1);
+    --fc-primary-gradient: linear-gradient(90deg, #5E60F9 0%, #9053F3 100%);
+    --fc-primary-gradient-hover: linear-gradient(90deg, #696BF9 0%, #9B66F3 100%);
+    --fc-text-heading-color: #F9FAFB;
+    --fc-text-color: #9ca3af;
+    --fc-text-color-light: #d1d5db;
+    --fc-primary-color: #5E60F9;
+    --fc-danger-color: #ef4444;
+    --fc-danger-hover-bg: rgba(239, 68, 68, 0.1);
+}
+
+/* --- Styles pour la Modale d'Ajout --- */
+
+.fc-modal .modal-content {
+    background: var(--fc-background-card);
+    border: 1px solid var(--fc-border-color);
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-width: 600px;
+}
+.fc-modal .modal-header {
+    border-bottom: 1px solid var(--fc-border-color);
+    padding: 1rem 1.5rem;
+}
+.fc-modal .modal-header h2 { color: var(--fc-text-heading-color); }
+.fc-modal .modal-body { padding: 1.5rem; }
+.fc-modal .modal-footer {
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid var(--fc-border-color);
+    padding: 1rem 1.5rem;
+}
+
+.fc-modal .tabs-nav {
+    display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 9px; padding: 0.25rem;
+}
+.fc-modal .tab-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; padding: 0.6rem 1rem;
+    border: none; border-radius: 7px;
+    font-weight: 500; cursor: pointer;
+    transition: all 0.2s;
+    background: transparent; color: var(--fc-text-color);
+}
+.fc-modal .tab-btn:hover { background: rgba(255,255,255, 0.05); color: var(--fc-text-color-light); }
+.fc-modal .tab-btn.active {
+    background: var(--fc-background-body);
+    color: var(--fc-text-heading-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.fc-modal .label { color: var(--fc-text-color-light); }
+.fc-modal .input, .fc-modal .select, .fc-modal .textarea {
+    background: var(--fc-background-body);
+    border: 1px solid var(--fc-border-color);
+    border-radius: 9px;
+    color: var(--fc-text-color-light);
+}
+.fc-modal .input:focus, .fc-modal .select:focus, .fc-modal .textarea:focus {
+    border-color: var(--fc-primary-color);
+    box-shadow: 0 0 0 3px rgba(94, 96, 249, 0.2);
+}
+.fc-modal .btn-primary { background: var(--fc-primary-gradient); }
+.fc-modal .btn-primary:hover { background: var(--fc-primary-gradient-hover); }
+.fc-modal .btn-secondary { background: var(--fc-background-card); border: 1px solid var(--fc-border-color); color: var(--fc-text-color-light); }
+.fc-modal .btn-secondary:hover { background: #2a2c33; }
+
+
+/* --- Styles pour la Page Flashcards --- */
+
+.fc-page .toolbar { margin-bottom: 2rem; }
+.fc-page .toolbar .btn-primary { background: var(--fc-primary-gradient); }
+.fc-page .toolbar .btn-secondary { background: var(--fc-background-card); border: 1px solid var(--fc-border-color); color: var(--fc-text-color-light); }
+.fc-page .toolbar .view-toggle { background: var(--fc-background-card); border: 1px solid var(--fc-border-color); }
+.fc-page .toolbar .view-toggle .icon-btn.active { background: var(--fc-background-body); color: var(--fc-text-heading-color); }
+
+.fc-page .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+.fc-page .flashcard {
+    background: var(--fc-background-card);
+    border: 1px solid var(--fc-border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    transition: all 0.2s;
+}
+.fc-page .flashcard:hover { transform: translateY(-4px); border-color: rgba(255, 255, 255, 0.2); }
+.fc-page .flashcard-header { display: flex; justify-content: space-between; align-items: center; }
+.fc-page .subject-badge { background: var(--fc-primary-gradient); color: white; border-radius: 9999px; }
+.fc-page .flashcard-q { color: var(--fc-text-heading-color); }
+.fc-page .flashcard-a { border-bottom: 1px solid var(--fc-border-color); }
+.fc-page .icon-btn:hover { background: #2a2c33; color: white; }
+.fc-page .icon-btn.danger:hover { background: var(--fc-danger-hover-bg); color: var(--fc-danger-color); }
+
+.fc-page .table-container {
+    background: var(--fc-background-card);
+    border: 1px solid var(--fc-border-color);
+    border-radius: 12px;
+}
+.fc-page .table th { border-bottom: 1px solid var(--fc-border-color); color: var(--fc-text-color); }
+.fc-page .table td { border-bottom: 1px solid var(--fc-border-color); color: var(--fc-text-color-light); }
+.fc-page .table tbody tr:last-child td { border-bottom: none; }
+.fc-page .table tbody tr:hover { background-color: rgba(255, 255, 255, 0.03); }
+.fc-page .table .a-cell { color: var(--fc-text-color); }
