@@ -6,6 +6,7 @@ import { useDataSync } from './context/DataSyncContext';
 import { useUIState } from './context/UIStateContext';
 import Auth from './components/Auth';
 import ReviewMode from './components/ReviewMode';
+import ReviewSessionSetup from './components/ReviewSessionSetup';
 import HomePage from './components/HomePage';
 import CoursePage from './components/CoursePage';
 import { DEFAULT_SUBJECT } from './constants/app';
@@ -52,6 +53,7 @@ const App = () => {
   const [editingCard, setEditingCard] = useState(null);
   const [cardToEdit, setCardToEdit] = useState(null);
   const [cardsToReviewCount, setCardsToReviewCount] = useState(0);
+  const [showReviewSetup, setShowReviewSetup] = useState(false);
 
   useEffect(() => {
     const fetchReviewCount = async () => {
@@ -120,8 +122,17 @@ const App = () => {
     return <Auth />;
   }
 
+  const handleStartReview = (options) => {
+    startReview(selectedSubjects, options.isCramMode, options.includeFuture);
+    setShowReviewSetup(false);
+  };
+
   if (reviewMode) {
     return <ReviewMode />;
+  }
+
+  if (showReviewSetup) {
+    return <ReviewSessionSetup onStartReview={handleStartReview} onClose={() => setShowReviewSetup(false)} />;
   }
 
   const handleSignOut = () => {
@@ -135,7 +146,7 @@ const App = () => {
           isConfigured={isConfigured}
           setShowSignOutModal={setShowSignOutModal}
           stats={stats}
-          startReview={() => startReview(selectedSubjects)}
+          startReview={() => setShowReviewSetup(true)}
           selectedSubjects={selectedSubjects}
           cardsToReviewCount={cardsToReviewCount}
           totalCards={stats.total}
