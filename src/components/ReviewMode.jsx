@@ -6,138 +6,134 @@ import { useUIState } from '../context/UIStateContext';
 import { X } from 'lucide-react';
 
 const ReviewMode = () => {
-  const { getCardsToReview, reviewCard } = useDataSync();
-  const { setReviewMode, selectedSubjects, isFreeReview } = useUIState();
-  const [cardsToReview, setCardsToReview] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { reviewCard } = useDataSync();
+  const { setReviewMode, reviewCards } = useUIState();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  useEffect(() => {
-    const loadCards = async () => {
-      const toReview = await getCardsToReview(selectedSubjects, { includeFuture: isFreeReview });
-      setCardsToReview(toReview);
-      setIsLoading(false);
-    };
-    loadCards();
-  }, [getCardsToReview, selectedSubjects, isFreeReview]);
+  const currentCard = reviewCards[currentIndex];
 
-  const currentCard = cardsToReview[currentIndex];
-
-  const handleAnswer = async (quality) => {
+  const handleAnswer = async (rating) => {
     if (!currentCard) return;
-    await reviewCard(currentCard, quality);
+
+    // The rating is from 1 to 5 as per our SRS logic
+    await reviewCard(currentCard.id, rating);
 
     setShowAnswer(false);
 
-    // Petite pause pour voir la carte se retourner avant de passer à la suivante
     setTimeout(() => {
-      if (currentIndex < cardsToReview.length - 1) {
+      if (currentIndex < reviewCards.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
+        // End of review session
         setReviewMode(false);
       }
-    }, 300); // 300ms, le temps de l'animation de retournement
+    }, 300); // Wait for the card to flip back
   };
 
   const handleExit = () => {
     setReviewMode(false);
   };
 
-  useEffect(() => {
-    if (!isLoading && cardsToReview.length === 0) {
-      setReviewMode(false);
-    }
-  }, [isLoading, cardsToReview, setReviewMode]);
-
-  if (isLoading) {
+  if (!currentCard) {
+    // This can happen if the component is rendered while cards are being fetched
+    // or if the review session ends. A loading or finished state could be shown.
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
-        <p className="dark:text-white">Chargement des cartes...</p>
+       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
+        <p className="dark:text-white">Fin de la session de révision !</p>
       </div>
     );
   }
 
-  const progressPercentage = cardsToReview.length > 0 ? ((currentIndex + 1) / cardsToReview.length) * 100 : 0;
+  const progressPercentage = reviewCards.length > 0 ? ((currentIndex + 1) / reviewCards.length) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col p-4">
+    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col p-4 sm:p-6 md:p-8">
+
       {/* Header */}
-      <div className="review-header">
-        <h1 className="app-title">Flashcards</h1>
-        <div className="progress-bar-container">
-          <div className="progress-bar" style={{ width: `${progressPercentage}%` }}></div>
-        </div>
-        <button onClick={handleExit} className="exit-button">
-          <X size={24} />
+      <div className="flex items-center justify-between w-full max-w-5xl mx-auto mb-4">
+        <h1 className="text-2xl font-bold dark:text-white">Flashcards</h1>
+        <button onClick={handleExit} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+          <X size={24} className="dark:text-white" />
         </button>
       </div>
 
-      {/* Card and Actions */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full">
-        <AnimatePresence>
-          {currentCard && (
-            <motion.div
-              key={currentCard.id}
-              initial={{ opacity: 0, y: 50, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -50, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              className="w-full max-w-2xl flex flex-col items-center"
-            >
-              {/* Card Scene */}
-              <div className="card-scene">
-                <motion.div
-                  className="flashcard"
-                  onClick={() => setShowAnswer(!showAnswer)}
-                  animate={{ rotateY: showAnswer ? 180 : 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  {/* Front */}
-                  <div className="card-face card-face-front">
-                    <p className="text-2xl md:text-3xl font-light text-center dark:text-white">
-                      {currentCard.question}
-                    </p>
-                    <span className="card-subject">{currentCard.subject}</span>
-                  </div>
-                  {/* Back */}
-                  <div className="card-face card-face-back">
-                    <p className="text-xl md:text-2xl font-light text-center dark:text-white">
-                      {currentCard.answer}
-                    </p>
-                    <span className="card-subject">{currentCard.subject}</span>
-                  </div>
-                </motion.div>
-              </div>
+      {/* Progress Bar & Counter */}
+      <div className="w-full max-w-5xl mx-auto mb-6">
+        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+          <motion.div
+            className="bg-blue-600 h-2.5 rounded-full"
+            animate={{ width: `${progressPercentage}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
+          {currentIndex + 1} / {reviewCards.length}
+        </p>
+      </div>
 
-              {/* Difficulty Buttons */}
-              <AnimatePresence>
-                {showAnswer && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                    className="flex items-center justify-center gap-2 md:gap-3 flex-wrap mt-8"
-                  >
-                    <button onClick={() => handleAnswer(1)} className="difficulty-capsule capsule-red">À revoir</button>
-                    <button onClick={() => handleAnswer(2)} className="difficulty-capsule capsule-orange">Difficile</button>
-                    <button onClick={() => handleAnswer(3)} className="difficulty-capsule capsule-yellow">Moyen</button>
-                    <button onClick={() => handleAnswer(4)} className="difficulty-capsule capsule-blue">Facile</button>
-                    <button onClick={() => handleAnswer(5)} className="difficulty-capsule capsule-green">Très facile</button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+      {/* Card and Actions */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full perspective">
+        <AnimatePresence>
+          <motion.div
+            key={currentCard.id}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4 }}
+            className="w-full max-w-2xl h-[55vh]" // Increased card height
+          >
+            {/* Card Scene */}
+            <div
+              className="relative w-full h-full cursor-pointer"
+              onClick={() => setShowAnswer(!showAnswer)}
+            >
+              <motion.div
+                className="absolute w-full h-full preserve-3d"
+                animate={{ rotateY: showAnswer ? 180 : 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                {/* Front */}
+                <div className="card-face-new card-face-front-new">
+                   <span className="card-subject-new">{currentCard.subject}</span>
+                  <p className="text-3xl md:text-4xl font-light text-center text-gray-800">
+                    {currentCard.question}
+                  </p>
+                  <div/>
+                </div>
+                {/* Back */}
+                <div className="card-face-new card-face-back-new">
+                  <span className="card-subject-new">{currentCard.subject}</span>
+                  <p className="text-2xl md:text-3xl font-light text-center text-gray-800">
+                    {currentCard.answer}
+                  </p>
+                  <div/>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Difficulty Buttons Footer */}
+      <div className="w-full max-w-4xl mx-auto pt-6 pb-2">
+        <AnimatePresence>
+          {showAnswer && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="flex items-center justify-center gap-2 md:gap-4 flex-wrap"
+            >
+              <button onClick={() => handleAnswer(1)} className="difficulty-capsule capsule-red">À revoir</button>
+              <button onClick={() => handleAnswer(2)} className="difficulty-capsule capsule-orange">Difficile</button>
+              <button onClick={() => handleAnswer(3)} className="difficulty-capsule capsule-yellow">Moyen</button>
+              <button onClick={() => handleAnswer(4)} className="difficulty-capsule capsule-blue">Facile</button>
+              <button onClick={() => handleAnswer(5)} className="difficulty-capsule capsule-green">Très facile</button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-
-       {/* Footer Info */}
-       <div className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
-          {currentIndex + 1} / {cardsToReview.length}
-          {isFreeReview && <span className="ml-2 font-semibold">- Révision Libre -</span>}
-        </div>
     </div>
   );
 };
