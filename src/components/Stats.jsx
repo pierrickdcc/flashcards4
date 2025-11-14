@@ -1,22 +1,21 @@
-
 import React from 'react';
 
 const Stats = ({ stats }) => {
   const statItems = [
-    { label: 'Total', value: stats.total, color: 'text-blue-500' },
-    { label: 'À réviser', value: stats.toReview, color: 'text-yellow-500' },
-    { label: 'Matières', value: stats.subjects, color: 'text-green-500' }
+    { label: 'Total des cartes', value: stats.total, color: 'text-stat-value-total' },
+    { label: 'À réviser', value: stats.toReview, color: 'text-stat-value-review' },
+    { label: 'Matières', value: stats.subjects, color: 'text-stat-value-subjects' }
   ];
 
   return (
-    <div className="glass-card p-6 mb-6">
-      <div className="stats-grid">
-        {statItems.map((stat, idx) => (
-          <div key={idx} className="flex items-center justify-between">
-            <div className="text-sm font-medium opacity-70">{stat.label}</div>
-            <div className={`text-3xl font-bold stat-value-${stat.label.toLowerCase()}`}>
+    <div className="bg-background-glass backdrop-blur-xl border border-border rounded-xl p-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {statItems.map((stat) => (
+          <div key={stat.label} className="flex flex-col gap-1">
+            <span className="text-sm text-muted-foreground">{stat.label}</span>
+            <span className={`text-3xl font-bold ${stat.color}`}>
               {stat.value}
-            </div>
+            </span>
           </div>
         ))}
       </div>

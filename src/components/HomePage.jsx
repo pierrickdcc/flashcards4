@@ -1,242 +1,155 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Toaster, toast } from 'react-hot-toast';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import { useDataSync } from '../context/DataSyncContext';
 import { useUIState } from '../context/UIStateContext';
-import { DEFAULT_SUBJECT } from '../constants/app';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Brain, Pin, Plus, Book, FileInput } from 'lucide-react';
 
-import Header from './Header';
-import Stats from './Stats';
-import Actions from './Actions';
-import Filters from './Filters';
-import CourseList from './CourseList';
-import CardGrid from './CardGrid';
-import CardTable from './CardTable';
-import Dashboard from './Dashboard';
-import MemoWall from './MemoWall';
-import ConfigModal from './ConfigModal';
-import BulkAddModal from './BulkAddModal';
-import AddSubjectModal from './AddSubjectModal';
-import AddCardModal from './AddCardModal';
-import AddCourseModal from './AddCourseModal';
-import DeleteSubjectModal from './DeleteSubjectModal';
-import SignOutConfirmationModal from './SignOutConfirmationModal';
-
-
-const HomePage = ({ isConfigured }) => {
+const HomePage = () => {
+  const { cards, memos } = useDataSync();
+  const { setShowAddCardModal, setShowAddCourseModal, setEditingMemo } = useUIState();
   const navigate = useNavigate();
-  const {
-    cards,
-    subjects,
-    deleteCardWithSync,
-    updateCardWithSync,
-    handleDeleteCardsOfSubject,
-    handleReassignCardsOfSubject,
-    getCardsToReview,
-    signOut
-  } = useDataSync();
 
   const {
-    showConfigModal,
-    setShowConfigModal,
-    showBulkAddModal: showBulkModal,
-    setShowBulkAddModal: setShowBulkModal,
-    showAddSubjectModal,
-    setShowAddSubjectModal,
-    showAddCardModal,
-    setShowAddCardModal,
-    showAddCourseModal,
-    setShowAddCourseModal,
-    selectedSubjects,
-    setSelectedSubjects,
-    searchTerm,
-    showSignOutModal,
-    setShowSignOutModal,
-    showDeleteSubjectModal,
-    setShowDeleteSubjectModal,
-    subjectToDelete,
-    setSubjectToDelete,
-  } = useUIState();
+    dueCardsCount,
+    forecast,
+    pinnedMemos,
+    difficultCards,
+  } = useMemo(() => {
+    if (!cards || !memos) return { dueCardsCount: 0, forecast: [], pinnedMemos: [], difficultCards: [] };
 
-  const [view, setView] = useState('courses');
-  const [editingCard, setEditingCard] = useState(null);
-  const [cardToEdit, setCardToEdit] = useState(null);
-  const [cardsToReviewCount, setCardsToReviewCount] = useState(0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  useEffect(() => {
-    const fetchReviewCount = async () => {
-      // selectedSubjects is now an array of IDs
-      const toReview = await getCardsToReview(selectedSubjects);
-      setCardsToReviewCount(toReview.length);
-    };
-    fetchReviewCount();
-  }, [cards, selectedSubjects, getCardsToReview]);
+    const dueCards = cards.filter(c => c.nextReview && new Date(c.nextReview) <= today);
 
-  const handleEditCard = (card) => {
-    setCardToEdit(card);
-    setShowAddCardModal(true);
-  };
-
-  const handleUpdateCard = (updatedData) => {
-    if (!editingCard) return;
-    updateCardWithSync(editingCard.id, updatedData);
-    toast.success("Carte mise à jour !");
-    setShowAddCardModal(false);
-    setEditingCard(null);
-  };
-
-  const handleDeleteSubject = (subjectId) => {
-    const subject = subjects.find(s => s.id === subjectId);
-    if (subject) {
-      setSubjectToDelete(subject); // Store the whole subject object
-      setShowDeleteSubjectModal(true);
-    }
-  };
-
-  const confirmDeleteSubject = () => {
-    handleDeleteCardsOfSubject(subjectToDelete.id);
-    setShowDeleteSubjectModal(false);
-    setSubjectToDelete(null);
-    setSelectedSubjects(['all']);
-  };
-
-  const confirmReassignSubject = () => {
-    const defaultSubject = subjects.find(s => s.name === DEFAULT_SUBJECT);
-    if (!defaultSubject) {
-      toast.error(`La matière par défaut "${DEFAULT_SUBJECT}" est introuvable.`);
-      return;
-    }
-    handleReassignCardsOfSubject(subjectToDelete.id);
-    setShowDeleteSubjectModal(false);
-    setSubjectToDelete(null);
-    setSelectedSubjects([defaultSubject.id]);
-  };
-
-  const filteredCards = useMemo(() => {
-    if (!cards?.length) return [];
-
-    const term = searchTerm?.toLowerCase().trim();
-    return cards.filter(c => {
-      // Match by subject_id
-      const matchesSubject = selectedSubjects.includes('all') || selectedSubjects.includes(c.subject_id);
-      if (!matchesSubject) return false;
-
-      if (!term) return true;
-      const q = c.question.toLowerCase();
-      const a = c.answer.toLowerCase();
-      return q.includes(term) || a.includes(term);
+    const forecastData = Array(7).fill(0).map((_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      date.setHours(0, 0, 0, 0);
+      const day = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+      const count = cards.filter(c => c.nextReview && new Date(c.nextReview).toDateString() === date.toDateString()).length;
+      return { day, à_réviser: count };
     });
-  }, [cards, selectedSubjects, searchTerm]);
 
-  const stats = {
-    total: cards?.length || 0,
-    toReview: cardsToReviewCount,
-    subjects: subjects?.length || 0
+    const pinned = memos.filter(memo => memo.isPinned).slice(0, 3);
+
+    const difficult = [...cards]
+      .filter(c => c.reviewCount > 5 && c.easeFactor < 2.0) // Example logic for "difficult"
+      .sort((a, b) => a.easeFactor - b.easeFactor)
+      .slice(0, 5);
+
+    return {
+      dueCardsCount: dueCards.length,
+      forecast: forecastData,
+      pinnedMemos: pinned,
+      difficultCards: difficult,
+    };
+  }, [cards, memos]);
+
+  const handleStartReview = () => {
+    navigate('/review/setup');
   };
 
-  const handleSignOut = () => {
-    signOut();
+  const handleMemoClick = (memo) => {
+    setEditingMemo(memo);
+    // Assuming a modal for memos exists and can be opened
+    // e.g., setShowMemoModal(true);
   };
 
   return (
-    <div>
-      <Toaster />
-      <Header
-        isConfigured={isConfigured}
-        setShowSignOutModal={setShowSignOutModal}
-      />
+    <div className="main-content">
+      <div className="welcome-header">
+        <h1>Bonjour, Bienvenue !</h1>
+        <p>Prêt à apprendre quelque chose de nouveau aujourd'hui ?</p>
+      </div>
 
-      <main style={{ maxWidth: '80rem', margin: '0 auto', padding: '2rem 1rem' }}>
-        <Stats stats={stats} />
+      <div className="hub-grid">
+        {/* Review Card */}
+        <div className="review-card">
+          <div>
+            <h2>À réviser aujourd'hui</h2>
+            <div className="review-count">{dueCardsCount}</div>
+            <p>cartes vous attendent.</p>
+          </div>
+          <button className="btn btn-primary" onClick={handleStartReview}>
+            <Brain size={18} />
+            <span>Commencer la révision</span>
+          </button>
+        </div>
 
-        <Actions
-          startReview={() => navigate('/review/setup')}
-          cardsToReviewCount={cardsToReviewCount}
-          totalCards={stats.total}
-        />
+        {/* Forecast Card */}
+        <div className="forecast-card">
+          <h2>Prévisions sur 7 jours</h2>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={forecast} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+              <XAxis dataKey="day" tick={{ fill: 'var(--text-color)', fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fill: 'var(--text-color)', fontSize: 12 }} />
+              <Tooltip
+                cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                contentStyle={{ background: 'var(--background-body)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+              />
+              <Bar dataKey="à_réviser" fill="var(--primary-color)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        <Filters
-          view={view}
-          setView={setView}
-          subjects={subjects}
-          onDeleteSubject={handleDeleteSubject}
-        />
+        {/* Pinned Memos */}
+        <div className="pinned-memos-container">
+          <h2><Pin size={18} style={{ transform: 'rotate(45deg)' }}/> Mémos Épinglés</h2>
+          <div className="pinned-memos-grid">
+            {pinnedMemos.length > 0 ? pinnedMemos.map(memo => (
+              <div key={memo.id} className={`memo-card memo-${memo.color}`} onClick={() => handleMemoClick(memo)}>
+                <p>{memo.content}</p>
+              </div>
+            )) : <p className="text-sm">Aucun mémo épinglé pour le moment.</p>}
+          </div>
+        </div>
 
-        {view === 'courses' && (
-          <CourseList
-            onCourseSelect={(course) => navigate(`/course/${course.id}`)}
-          />
-        )}
-        {view === 'cards' && (
-          <CardGrid
-            filteredCards={filteredCards}
-            setEditingCard={handleEditCard}
-            deleteCardWithSync={deleteCardWithSync}
-            subjects={subjects || []}
-          />
-        )}
-        {view === 'table' && (
-          <CardTable
-            filteredCards={filteredCards}
-            editingCard={editingCard}
-            setEditingCard={setEditingCard}
-            updateCardWithSync={updateCardWithSync}
-            deleteCardWithSync={deleteCardWithSync}
-            subjects={subjects || []}
-          />
-        )}
-        {view === 'dashboard' && (
-          <Dashboard />
-        )}
-        {view === 'memos' && (
-          <MemoWall />
-        )}
-      </main>
+        {/* Quick Actions */}
+        <div className="quick-actions">
+          <h2>Actions Rapides</h2>
+          <div className="actions-grid">
+            <a href="#" onClick={(e) => { e.preventDefault(); setShowAddCardModal(true); }} className="action-card">
+              <div className="action-card-icon"><Plus size={20} /></div>
+              <div className="action-card-text">
+                <h3>Ajouter une Carte</h3>
+                <p>Créer une nouvelle flashcard</p>
+              </div>
+            </a>
+            <a href="#" onClick={(e) => { e.preventDefault(); /* setShowBulkAddModal(true); */ }} className="action-card">
+              <div className="action-card-icon"><FileInput size={20} /></div>
+              <div className="action-card-text">
+                <h3>Ajout en Masse</h3>
+                <p>Importer plusieurs cartes à la fois</p>
+              </div>
+            </a>
+            <a href="#" onClick={(e) => { e.preventDefault(); setShowAddCourseModal(true); }} className="action-card">
+              <div className="action-card-icon"><Book size={20} /></div>
+              <div className="action-card-text">
+                <h3>Ajouter un Cours</h3>
+                <p>Créer une nouvelle page de cours</p>
+              </div>
+            </a>
+          </div>
+        </div>
 
-      {/* Modals */}
-      <ConfigModal
-        show={showConfigModal}
-        onClose={() => setShowConfigModal(false)}
-      />
+        {/* Difficult Cards - Added as per request */}
+        <div className="quick-actions" style={{ gridRow: '4 / 5' }}>
+            <h2>Cartes Difficiles</h2>
+            <div className="actions-grid">
+                {difficultCards.length > 0 ? difficultCards.map(card => (
+                    <div key={card.id} className="action-card" style={{ flex: '1 1 300px' }}>
+                        <div className="action-card-text">
+                            <h3 className="truncate">{card.question}</h3>
+                            <p className="text-xs mt-1">Revue {card.reviewCount} fois</p>
+                        </div>
+                    </div>
+                )) : <p className="text-sm">Aucune carte difficile identifiée.</p>}
+            </div>
+        </div>
 
-      <BulkAddModal
-        show={showBulkModal}
-        onClose={() => setShowBulkModal(false)}
-      />
-
-      <AddSubjectModal
-        show={showAddSubjectModal}
-        onClose={() => setShowAddSubjectModal(false)}
-      />
-
-      <AddCardModal
-        show={showAddCardModal}
-        onClose={() => {
-          setShowAddCardModal(false);
-          setCardToEdit(null);
-        }}
-        cardToEdit={cardToEdit}
-      />
-
-      <AddCourseModal
-        show={showAddCourseModal}
-        onClose={() => setShowAddCourseModal(false)}
-      />
-
-      <DeleteSubjectModal
-        show={showDeleteSubjectModal}
-        onClose={() => setShowDeleteSubjectModal(false)}
-        onDelete={confirmDeleteSubject}
-        onReassign={confirmReassignSubject}
-        subjectToDelete={subjectToDelete?.name}
-      />
-
-      <SignOutConfirmationModal
-        show={showSignOutModal}
-        onClose={() => setShowSignOutModal(false)}
-        onConfirm={handleSignOut}
-      />
+      </div>
     </div>
   );
 };

@@ -1,8 +1,0 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Pour cacher le input[type=file] */
-.hidden-file-input {
-  display: none;
-}
