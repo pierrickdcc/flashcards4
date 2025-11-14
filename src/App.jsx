@@ -37,6 +37,7 @@ const App = () => {
     showAddCourseModal,
     setShowAddCourseModal,
     reviewMode,
+    reviewCards,
     selectedSubjects,
     setSelectedSubjects,
     searchTerm,
@@ -129,7 +130,7 @@ const App = () => {
     }
   };
 
-  if (reviewMode) {
+  if (reviewMode && reviewCards.length > 0) {
     return <ReviewMode />;
   }
 
