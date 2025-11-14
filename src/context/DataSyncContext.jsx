@@ -638,6 +638,16 @@ const formatUserCardProgressForSupabase = (progress) => ({
       });
     }
 
+    // 🛠️ CORRECTIF: Mettre à jour la carte dans db.cards pour l'affichage.
+    // C'est la solution au bug "Prochaine révision: Jamais".
+    const cardToUpdate = await db.cards.get(cardId);
+    if (cardToUpdate) {
+      await db.cards.update(cardId, {
+        nextReview: dueDate,
+        reviewCount: (cardToUpdate.reviewCount || 0) + 1,
+      });
+    }
+
     if (isOnline) {
       syncToCloud();
     }
