@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mode Révision - Flashcards Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icônes Lucide -->
+    <script src="https://unpkg.com/lucide-react@0.395.0/dist/umd/lucide-react.js"></script>
+    <style>
+        /* Styles de base (inspirés de NewStyles.css et de votre image) */
+        :root {
+            --background-body: #F9FAFB; /* Fond clair de l'image */
+            --border-color: rgba(0, 0, 0, 0.1);
+            --primary-color: #3B82F6;
+            --primary-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+            --text-heading-color: #1f2937;
+            --text-color: #6b7280;
+            --card-bg: #FFFFFF;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+            --muted-bg: #e5e7eb;
+        }
+
+        /* Version Dark (votre style d'origine) */
+        body.dark {
+            --background-body: #0E1116;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-heading-color: #e5e7eb;
+            --text-color: #9ca3af;
+            --card-bg: #1f2937;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --muted-bg: #374151;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-body);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden; /* Empêche le scroll */
+        }
+
+        /* Boutons (communs) */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        .btn-primary { background: var(--primary-gradient); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2); }
+        .icon-btn { background: none; border: none; color: var(--text-color); padding: 0.5rem; border-radius: 50%; cursor: pointer; transition: all 0.2s; }
+        .icon-btn:hover { background: var(--muted-bg); color: var(--text-heading-color); }
+
+        /* Header (inspiré de ReviewMode.jsx) */
+        .review-header {
+            width: 100%;
+            max-width: 56rem; /* 896px */
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-shrink: 0;
+        }
+        .logo { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; color: var(--text-heading-color); text-decoration: none;}
+        .logo-text { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .progress-container {
+            flex-grow: 1;
+        }
+        .progress-bar {
+            width: 100%;
+            background: var(--muted-bg);
+            border-radius: 99px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            width: 5%; /* Exemple (1 sur 20) */
+            background: var(--primary-gradient);
+            border-radius: 99px;
+            transition: width 0.3s ease-out;
+        }
+        .progress-text {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            opacity: 0.8;
+        }
+
+        /* Main (Zone de la carte) */
+        .review-main {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 1rem;
+            perspective: 1500px;
+        }
+
+        /* Scène de la carte (pour la 3D) */
+        .card-scene {
+            width: 100%;
+            max-width: 56rem; /* 896px */
+            aspect-ratio: 16 / 9;
+            max-height: 500px;
+            position: relative;
+        }
+
+        .card-flipper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .card-flipper.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem;
+            border-radius: 24px;
+            background: var(--card-bg);
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-face-front {
+            /* Recto */
+        }
+        .card-face-back {
+            /* Verso */
+            transform: rotateY(180deg);
+        }
+
+        .card-subject-tag {
+            align-self: flex-start;
+            padding: 0.3rem 0.8rem;
+            background: var(--muted-bg);
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .card-content {
+            font-size: 2.25rem;
+            font-weight: 500;
+            color: var(--text-heading-color);
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* Footer (Actions) */
+        .review-footer {
+            width: 100%;
+            flex-shrink: 0;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .difficulty-buttons .btn {
+            font-size: 0.9rem;
+            padding: 0.75rem 1rem;
+            min-width: 100px;
+        }
+
+        /* Couleurs des boutons de difficulté */
+        .btn-rating-1 { background-color: #ef4444; color: white; } /* Rouge */
+        .btn-rating-2 { background-color: #f97316; color: white; } /* Orange */
+        .btn-rating-3 { background-color: #f59e0b; color: white; } /* Jaune */
+        .btn-rating-4 { background-color: #3b82f6; color: white; } /* Bleu */
+        .btn-rating-5 { background-color: #22c55e; color: white; } /* Vert */
+
+        /* Gestion des états affichés/masqués */
+        .hidden {
+            display: none !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="review-header">
+        <a href="#" class="logo">
+            <i data-lucide="book-open"></i>
+            <span class="logo-text">Flashcards Pro</span>
+        </a>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-bar-inner"></div>
+            </div>
+            <p class="progress-text">Carte 1 sur 20</p>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" title="Recommencer">
+                <i data-lucide="rotate-ccw" size="20"></i>
+            </button>
+            <button class="icon-btn" title="Quitter le mode révision">
+                <i data-lucide="x" size="24"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main (Zone de la carte) -->
+    <main class="review-main">
+        <div class="card-scene">
+            <div class="card-flipper" id="card-flipper">
+                <!-- Recto -->
+                <div class="card-face card-face-front">
+                    <span class="card-subject-tag">React</span>
+                    <p class="card-content">
+                        Qu'est-ce que le "Virtual DOM" ?
+                    </p>
+                    <div style="height: 24px;"></div> <!-- Espaceur pour centrer -->
+                </div>
+                <!-- Verso -->
+                <div class="card-face card-face-back">
+                    <span class="card-subject-tag">React</span>
+                    <p class="card-content" style="font-size: 1.5rem;">
+                        Une représentation en mémoire de l'UI, qui est synchronisée avec le "vrai" DOM par React. C'est un objet JavaScript qui permet des mises à jour performantes.
+                    </p>
+                    <div style="height: 24px;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (Actions) -->
+    <footer class="review-footer">
+        <!-- Bouton "Retourner" (Recto) -->
+        <div id="action-show-answer">
+            <button class="btn btn-primary" id="flip-button" style="padding: 0.8rem 2.5rem; font-size: 1rem;">
+                Retourner la carte
+            </button>
+        </div>
+
+        <!-- Boutons de difficulté (Verso) -->
+        <div class="difficulty-buttons hidden" id="action-rate-difficulty">
+            <button class="btn btn-rating-1">À revoir</button>
+            <button class="btn btn-rating-2">Difficile</button>
+            <button class="btn btn-rating-3">Moyen</button>
+            <button class="btn btn-rating-4">Facile</button>
+            <button class="btn btn-rating-5">Très facile</button>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Script simple pour simuler la bascule
+        const cardFlipper = document.getElementById('card-flipper');
+        const flipButton = document.getElementById('flip-button');
+        const showAnswerActions = document.getElementById('action-show-answer');
+        const rateDifficultyActions = document.getElementById('action-rate-difficulty');
+
+        function showBack() {
+            cardFlipper.classList.add('is-flipped');
+            showAnswerActions.classList.add('hidden');
+            rateDifficultyActions.classList.remove('hidden');
+        }
+
+        function showFront() {
+            cardFlipper.classList.remove('is-flipped');
+            showAnswerActions.classList.remove('hidden');
+            rateDifficultyActions.classList.add('hidden');
+        }
+
+        // Cliquer sur le bouton "Retourner"
+        flipButton.addEventListener('click', showBack);
+
+        // Cliquer sur la carte elle-même
+        cardFlipper.addEventListener('click', () => {
+             if (cardFlipper.classList.contains('is-flipped')) {
+                // Si on est au verso, ne rien faire (on doit choisir une difficulté)
+             } else {
+                 showBack();
+             }
+        });
+
+        // Cliquer sur un bouton de difficulté (simule le passage à la carte suivante)
+        rateDifficultyActions.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Simule le passage à la carte suivante en retournant au recto
+                showFront();
+                // Ici, vous mettriez à jour le contenu de la carte, la barre de progression, etc.
+            });
+        });
+
+    </script>
+</body>
+</html>

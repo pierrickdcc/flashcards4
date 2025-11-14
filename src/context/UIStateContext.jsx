@@ -22,7 +22,8 @@ export const UIStateProvider = ({ children }) => {
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showDeleteSubjectModal, setShowDeleteSubjectModal] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState(null);
-  // FIN DES AJOUTS
+  const [showAddMemoModal, setShowAddMemoModal] = useState(false);
+  const [editingMemo, setEditingMemo] = useState(null);
 
   const debouncedSetSearchTerm = useDebouncedCallback((value) => {
     setSearchTerm(value);
@@ -57,6 +58,8 @@ export const UIStateProvider = ({ children }) => {
     showSignOutModal, setShowSignOutModal,
     showDeleteSubjectModal, setShowDeleteSubjectModal,
     subjectToDelete, setSubjectToDelete,
+    showAddMemoModal, setShowAddMemoModal,
+    editingMemo, setEditingMemo,
   };
 
   return (

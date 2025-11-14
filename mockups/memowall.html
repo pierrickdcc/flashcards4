@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mémos - Flashcards Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide-react@0.395.0/dist/umd/lucide-react.js"></script>
+    <style>
+        /* Styles de base (identiques au dashboard) */
+        :root {
+            --background-body: #0E1116;
+            --background-glass: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary-color: #3B82F6;
+            --primary-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+            --text-heading-color: #e5e7eb;
+            --text-color: #9ca3af;
+
+            /* Couleurs des Mémos (style pro dark-theme) */
+            --memo-yellow-bg: #2a261a; --memo-yellow-border: #a18a38; --memo-yellow-text: #f5e3a7;
+            --memo-blue-bg: #1a2333;   --memo-blue-border: #386ea1;   --memo-blue-text: #a7c7f5;
+            --memo-green-bg: #1a2a22;  --memo-green-border: #38a169;  --memo-green-text: #a7f5c7;
+            --memo-pink-bg: #301f2a;   --memo-pink-border: #a13884;   --memo-pink-text: #f5a7e3;
+            --memo-purple-bg: #261f30; --memo-purple-border: #7538a1; --memo-purple-text: #d6a7f5;
+            --memo-gray-bg: #22252a;   --memo-gray-border: #626e82;   --memo-gray-text: #c8d1e0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-body);
+            color: var(--text-color);
+        }
+
+        /* Header (identique au dashboard) */
+        .header { position: sticky; top: 0; z-index: 50; background: rgba(14, 17, 22, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); }
+        .header-content { max-width: 80rem; margin: 0 auto; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; color: var(--text-heading-color); }
+        .logo-text { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .search-bar { flex: 1; max-width: 500px; position: relative; display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 12px; padding: 0 1rem; }
+        .search-icon { opacity: 0.5; margin-right: 0.75rem; }
+        .search-input { flex: 1; background: none; border: none; outline: none; padding: 0.75rem 0; color: inherit; font-size: 0.875rem; width: 100%; }
+        .kbd { background: rgba(255, 255, 255, 0.1); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; opacity: 0.7; }
+        .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.25rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        .btn-primary { background: var(--primary-gradient); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-heading-color); }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+        .icon-btn { background: none; border: none; color: var(--text-color); padding: 0.5rem; border-radius: 50%; cursor: pointer; transition: all 0.2s; }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-heading-color); }
+        .avatar { width: 2.25rem; height: 2.25rem; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; color: white; }
+
+        /* Contenu Principal */
+        .main-content { max-width: 80rem; margin: 0 auto; padding: 2rem 1.5rem; }
+        .glass-card { background: var(--background-glass); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; }
+
+        /* Filtres (identique, mais avec "Mémos" actif) */
+        .filters-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 2rem; }
+        .subject-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; font-size: 0.875rem; }
+        .subject-filters label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .subject-filters input { accent-color: var(--primary-color); }
+        .view-toggle { display: flex; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.25rem; }
+        .view-toggle button { padding: 0.5rem 0.75rem; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--text-color); opacity: 0.6; }
+        .view-toggle button.active { background: rgba(59, 130, 246, 0.2); opacity: 1; color: var(--text-heading-color); }
+
+        /* Memo Wall (inspiré de MemoWall.jsx et vos demandes) */
+        .memo-wall {
+            column-count: 4;
+            column-gap: 1.5rem;
+        }
+        @media (max-width: 1200px) { .memo-wall { column-count: 3; } }
+        @media (max-width: 900px) { .memo-wall { column-count: 2; } }
+        @media (max-width: 600px) { .memo-wall { column-count: 1; } }
+
+        .memo-card {
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            break-inside: avoid; /* Important for masonry */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .memo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .memo-card p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            white-space: pre-wrap; /* Respecte les sauts de ligne */
+        }
+
+        /* Styles des couleurs de mémo */
+        .memo-yellow { background: var(--memo-yellow-bg); border: 1px solid var(--memo-yellow-border); color: var(--memo-yellow-text); }
+        .memo-blue   { background: var(--memo-blue-bg);   border: 1px solid var(--memo-blue-border);   color: var(--memo-blue-text); }
+        .memo-green  { background: var(--memo-green-bg);  border: 1px solid var(--memo-green-border);  color: var(--memo-green-text); }
+        .memo-pink   { background: var(--memo-pink-bg);   border: 1px solid var(--memo-pink-border);   color: var(--memo-pink-text); }
+        .memo-purple { background: var(--memo-purple-bg); border: 1px solid var(--memo-purple-border); color: var(--memo-purple-text); }
+        .memo-gray   { background: var(--memo-gray-bg);   border: 1px solid var(--memo-gray-border);   color: var(--memo-gray-text); }
+
+        /* Bouton Flottant (FAB) */
+        .btn-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+        }
+
+        /* Modale (inspiré de ModalWrapper.jsx et MemoModal.jsx) */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Masqué par défaut, à afficher avec JS */
+            /* display: none; */
+        }
+        .modal-content {
+            width: 100%;
+            max-width: 500px;
+            background: #161a20; /* Un peu plus clair que le body */
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-header h2 { font-size: 1.25rem; font-weight: 600; color: var(--text-heading-color); }
+        .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .modal-body textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-heading-color);
+            font-size: 0.9rem;
+            padding: 1rem;
+            resize: vertical;
+        }
+        .modal-body textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .color-palette { display: flex; align-items: center; gap: 0.75rem; }
+        .color-dot {
+            width: 24px; height: 24px; border-radius: 50%;
+            cursor: pointer; border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .color-dot:hover { transform: scale(1.1); }
+        .color-dot.active { border-color: white; box-shadow: 0 0 0 2px var(--color-bg); }
+
+        .modal-footer { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: rgba(0,0,0,0.1); border-top: 1px solid var(--border-color); }
+        .btn-danger { background: #ef4444; color: white; }
+    </style>
+</head>
+<body class="dark">
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i data-lucide="book-open"></i>
+                <span class="logo-text">Flashcards Pro</span>
+            </div>
+            <div class="search-bar">
+                <i class="search-icon" data-lucide="search" size="18"></i>
+                <input type="text" placeholder="Rechercher..." class="search-input">
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" title="Changer de thème"><i data-lucide="sun"></i></button>
+                <button class="btn btn-primary">
+                    <i data-lucide="plus" size="18"></i>
+                    <span>Nouveau</span>
+                </button>
+                <button class="avatar" title="Mon compte">
+                    <i data-lucide="user" size="18"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+
+        <div class="filters-bar">
+            <div class="subject-filters">
+                <label><input type="checkbox" checked> Toutes les matières</label>
+            </div>
+            <div class="view-toggle">
+                <button title="Cartes"><i data-lucide="layout-grid"></i></button>
+                <button title="Tableau"><i data-lucide="list"></i></button>
+                <button title="Cours"><i data-lucide="book"></i></button>
+                <button title="Mémos" class="active"><i data-lucide="clipboard-list"></i></button>
+                <button class="btn btn-secondary" style="gap: 0.5rem; background: var(--background-glass); opacity: 1;">
+                    <i data-lucide="bar-chart-3" size="18"></i>
+                     Tableau de bord
+                </button>
+            </div>
+        </div>
+
+        <div class="memo-wall">
+
+            <div class="memo-card memo-yellow">
+                <p>Idée rapide : revoir le chapitre 3 sur les hooks React. Surtout useMemo et useCallback.</p>
+            </div>
+
+            <div class="memo-card memo-green">
+                <p>Ne pas oublier de faire les courses :
+- Lait
+- Oeufs
+- Pain</p>
+            </div>
+
+            <div class="memo-card memo-blue">
+                <p>Le pattern "Observer" est un pattern de conception comportemental qui permet à un objet (le "sujet") de notifier une liste d'objets dépendants (les "observateurs") de tout changement d'état.</p>
+            </div>
+
+            <div class="memo-card memo-pink">
+                <p>Appeler Maman pour son anniversaire ! 🎂</p>
+            </div>
+
+            <div class="memo-card memo-gray">
+                <p>Commande SQL pour l'agrégation :
+`SELECT subject_id, COUNT(id) FROM cards GROUP BY subject_id;`</p>
+            </div>
+
+            <div class="memo-card memo-purple">
+                <p>Les mémos épinglés devraient apparaître en premier. Il faut aussi pouvoir les lier à un cours spécifique. Ce mémo est plus long pour montrer comment la taille s'adapte dans la grille masonry.</p>
+            </div>
+
+            <div class="memo-card memo-yellow">
+                <p>Juste un autre mémo court.</p>
+            </div>
+
+        </div>
+
+    </main>
+
+    <button class="btn btn-primary btn-fab" title="Ajouter un mémo">
+        <i data-lucide="plus" size="24"></i>
+    </button>
+
+
+    <div class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nouveau mémo</h2>
+                <button class="icon-btn"><i data-lucide="x" size="20"></i></button>
+            </div>
+            <div class="modal-body">
+                <textarea placeholder="Votre mémo..."></textarea>
+
+                <div class="color-palette">
+                    <span style="font-size: 0.875rem; margin-right: 0.5rem;">Couleur :</span>
+                    <button class="color-dot active" style="background: var(--memo-yellow-border); --color-bg: var(--memo-yellow-bg);" title="Jaune"></button>
+                    <button class="color-dot" style="background: var(--memo-blue-border); --color-bg: var(--memo-blue-bg);" title="Bleu"></button>
+                    <button class="color-dot" style="background: var(--memo-green-border); --color-bg: var(--memo-green-bg);" title="Vert"></button>
+                    <button class="color-dot" style="background: var(--memo-pink-border); --color-bg: var(--memo-pink-bg);" title="Rose"></button>
+                    <button class="color-dot" style="background: var(--memo-purple-border); --color-bg: var(--memo-purple-bg);" title="Violet"></button>
+                    <button class="color-dot" style="background: var(--memo-gray-border); --color-bg: var(--memo-gray-bg);" title="Gris"></button>
+                </div>
+
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; color: var(--text-heading-color);">
+                    <input type="checkbox" style="width: 16px; height: 16px; accent-color: var(--primary-color);">
+                    Épingler ce mémo
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" style="padding: 0.6rem 1rem;">Supprimer</button>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-secondary">Annuler</button>
+                    <button class="btn btn-primary">Sauvegarder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        lucide.createIcons();
+
+        // Petite simulation pour les ronds de couleur de la modale
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                document.querySelector('.color-dot.active')?.classList.remove('active');
+                dot.classList.add('active');
+                // Bonus: changer la couleur du textarea pour prévisualiser
+                document.querySelector('.modal-body textarea').style.borderColor = getComputedStyle(dot).backgroundColor;
+                document.querySelector('.modal-body textarea').style.background = getComputedStyle(dot).getPropertyValue('--color-bg');
+            });
+        });
+    </script>
+</body>
+</html>
