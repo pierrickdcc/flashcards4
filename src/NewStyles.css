@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -25,6 +29,10 @@ h1, h2, h3, h4, h5, h6 {
   --text-muted-color: #9ca3af;
   --border-color: rgba(255, 255, 255, 0.1);
   --background-glass: rgba(30, 41, 59, 0.8);
+  --primary-color: #3B82F6;
+  --muted-color: #374151;
+  --background-body: #0E1116;
+  --text-color: #e5e7eb;
 }
 
 body.light {
@@ -32,6 +40,10 @@ body.light {
   --text-muted-color: #6b7280;
   --border-color: rgba(0, 0, 0, 0.1);
   --background-glass: rgba(255, 255, 255, 0.8);
+  --primary-color: #3B82F6;
+  --muted-color: #e5e7eb;
+  --background-body: #F9FAFB;
+  --text-color: #1f2937;
 }
 
 .text-muted {
@@ -293,36 +305,6 @@ transition: all 0.2s;
 background: #dc2626;
  }
 
-.icon-btn {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-width: 2.5rem;
-height: 2.5rem;
-background: rgba(255, 255, 255, 0.05);
-border: 1px solid rgba(255, 255, 255, 0.08);
-border-radius: 10px;
-cursor: pointer;
-transition: all 0.2s;
-color: inherit;
- }
-body.light .icon-btn {
-background: rgba(0, 0, 0, 0.03);
-border: 1px solid rgba(0, 0, 0, 0.08);
- }
-
-.icon-btn:hover {
-background: rgba(255, 255, 255, 0.1);
-border-color: rgba(59, 130, 246, 0.3);
- }
-body.light .icon-btn:hover {
-background: rgba(0, 0, 0, 0.05);
- }
-
-.icon-btn svg {
-width: 20px;
-height: 20px;
- }
 
 .avatar {
 width: 2.5rem;
@@ -751,16 +733,6 @@ body.light .card-subject {
   transform: rotateY(180deg);
 }
 
-.difficulty-capsule {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 9999px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
 .btn-fab {
   position: fixed;
   bottom: 2rem;
@@ -774,17 +746,6 @@ body.light .card-subject {
   padding: 0;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
-
-.difficulty-capsule:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.capsule-red { background-color: #ef4444; }
-.capsule-orange { background-color: #f97316; }
-.capsule-yellow { background-color: #f59e0b; }
-.capsule-blue { background-color: #3b82f6; }
-.capsule-green { background-color: #22c55e; }
 
 /* Responsive Adjustments for Review Mode */
 @media (max-width: 640px) {
