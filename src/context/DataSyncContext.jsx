@@ -711,8 +711,10 @@ const formatUserCardProgressForSupabase = (progress) => ({
       setReviewCards(toReview); // Pass cards to UI state
       setIsCramMode(isCramMode);
       setReviewMode(true);
+      return true;
     } else {
       toast.error("Aucune carte à réviser !");
+      return false;
     }
   };
 

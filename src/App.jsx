@@ -122,9 +122,11 @@ const App = () => {
     return <Auth />;
   }
 
-  const handleStartReview = (options) => {
-    startReview(selectedSubjects, options.isCramMode, options.includeFuture);
-    setShowReviewSetup(false);
+  const handleStartReview = async (options) => {
+    const success = await startReview(selectedSubjects, options.isCramMode, options.includeFuture);
+    if (success) {
+      setShowReviewSetup(false);
+    }
   };
 
   if (reviewMode) {

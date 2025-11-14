@@ -1,46 +1,62 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDataSync } from '../context/DataSyncContext';
 import { useUIState } from '../context/UIStateContext';
-import { X } from 'lucide-react';
+import { X, CheckCircle } from 'lucide-react';
 
 const ReviewMode = () => {
   const { reviewCard } = useDataSync();
   const { setReviewMode, reviewCards } = useUIState();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
 
   const currentCard = reviewCards[currentIndex];
 
   const handleAnswer = async (rating) => {
     if (!currentCard) return;
 
-    // The rating is from 1 to 5 as per our SRS logic
     await reviewCard(currentCard.id, rating);
-
     setShowAnswer(false);
 
     setTimeout(() => {
       if (currentIndex < reviewCards.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        // End of review session
-        setReviewMode(false);
+        setIsFinished(true);
       }
-    }, 300); // Wait for the card to flip back
+    }, 300);
   };
 
   const handleExit = () => {
     setReviewMode(false);
   };
 
+  if (isFinished) {
+    return (
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <CheckCircle size={64} className="mx-auto text-green-500 mb-4" />
+          <h2 className="text-3xl font-bold mb-2">Session terminée !</h2>
+          <p className="text-muted mb-6">Bravo, vous avez terminé votre session de révision.</p>
+          <button onClick={handleExit} className="btn-primary">
+            Retour à l'accueil
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!currentCard) {
-    // This can happen if the component is rendered while cards are being fetched
-    // or if the review session ends. A loading or finished state could be shown.
+    // Should not happen anymore with the new guard, but kept as a fallback.
     return (
        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
-        <p className="dark:text-white">Fin de la session de révision !</p>
+        <p className="dark:text-white">Chargement...</p>
       </div>
     );
   }
@@ -49,7 +65,6 @@ const ReviewMode = () => {
 
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col p-4 sm:p-6 md:p-8">
-
       {/* Header */}
       <div className="flex items-center justify-between w-full max-w-5xl mx-auto mb-4">
         <h1 className="text-2xl font-bold dark:text-white">Flashcards</h1>
@@ -81,9 +96,8 @@ const ReviewMode = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
-            className="w-full max-w-2xl h-[55vh]" // Increased card height
+            className="w-full max-w-2xl h-[55vh]"
           >
-            {/* Card Scene */}
             <div
               className="relative w-full h-full cursor-pointer"
               onClick={() => setShowAnswer(!showAnswer)}
