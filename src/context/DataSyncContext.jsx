@@ -4,13 +4,15 @@ import { db } from '../db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import toast from 'react-hot-toast';
 import { DEFAULT_SUBJECT, TABLE_NAMES, LOCAL_STORAGE_KEYS } from '../constants/app';
-import { calculateNextReview } from '../utils/spacedRepetition';
+import { calculateSrsData } from '../utils/spacedRepetition';
 import { useAuth } from './AuthContext';
+import { useUIState } from './UIStateContext';
 
 const DataSyncContext = createContext();
 
 export const DataSyncProvider = ({ children }) => {
   const { session, workspaceId, isConfigured } = useAuth();
+  const { setReviewMode, setIsCramMode, setReviewCards, isCramMode } = useUIState();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(null);
@@ -557,30 +559,29 @@ const formatUserCardProgressForSupabase = (progress) => ({
     }
   };
 
-  const reviewCard = async (currentCard, quality) => {
+  const reviewCard = async (cardId, rating) => {
+    if (isCramMode) {
+      // In cram mode, do not update progress.
+      return;
+    }
+
     const userId = session?.user?.id;
     if (!userId) return;
 
-    let progress = await db.user_card_progress
-      .where({ card_id: currentCard.id, user_id: userId })
+    const progress = await db.user_card_progress
+      .where({ card_id: cardId, user_id: userId })
       .first();
 
-    const { nextReview, interval, easiness } = calculateNextReview(
-      quality,
-      progress?.interval || 1,
-      progress?.easiness || 2.5
-    );
-
-    // Ensure nextReview is a Date object before calling toISOString
-    const nextReviewDate = nextReview instanceof Date ? nextReview : new Date(nextReview);
+    // The calculateSrsData function handles new vs existing progress internally
+    const { interval, easeFactor, status, dueDate } = calculateSrsData(progress, rating);
 
     const updatedProgress = {
-      card_id: currentCard.id,
+      card_id: cardId,
       user_id: userId,
-      nextReview: nextReviewDate.toISOString(),
       interval,
-      easiness,
-      reviewCount: (progress?.reviewCount || 0) + 1,
+      easeFactor,
+      status,
+      dueDate,
       updatedAt: new Date().toISOString(),
       isSynced: false,
     };
@@ -588,6 +589,7 @@ const formatUserCardProgressForSupabase = (progress) => ({
     if (progress) {
       await db.user_card_progress.update(progress.id, updatedProgress);
     } else {
+      // Card has no progress record yet, create one.
       await db.user_card_progress.add({
         ...updatedProgress,
         id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -682,7 +684,7 @@ const formatUserCardProgressForSupabase = (progress) => ({
       const progress = progressMap.get(card.id);
       if (!progress) return true; // C'est une nouvelle carte, elle est due
       if (includeFuture) return true; // En mode "Révision Libre", on prend tout
-      return new Date(progress.nextReview) <= now; // Sinon, on vérifie la date
+      return new Date(progress.dueDate) <= now; // Sinon, on vérifie la date
     });
 
     if (dueCards.length === 0) return [];
@@ -694,8 +696,8 @@ const formatUserCardProgressForSupabase = (progress) => ({
 
     if (includeFuture) {
       return mergedCards.sort((a, b) => {
-        const dateA = a.nextReview ? new Date(a.nextReview) : 0;
-        const dateB = b.nextReview ? new Date(b.nextReview) : 0;
+        const dateA = a.dueDate ? new Date(a.dueDate) : 0;
+        const dateB = b.dueDate ? new Date(b.dueDate) : 0;
         return dateA - dateB;
       });
     }
@@ -703,12 +705,16 @@ const formatUserCardProgressForSupabase = (progress) => ({
     return mergedCards.sort(() => Math.random() - 0.5);
   };
 
-  const startReview = async (subjects = ['all'], options = {}) => {
-    const toReview = await getCardsToReview(subjects, options);
+  const startReview = async (subjects = ['all'], isCramMode = false, includeFuture = false) => {
+    const toReview = await getCardsToReview(subjects, { includeFuture });
     if (toReview.length > 0) {
-      //
+      setReviewCards(toReview); // Pass cards to UI state
+      setIsCramMode(isCramMode);
+      setReviewMode(true);
+      return true;
     } else {
       toast.error("Aucune carte à réviser !");
+      return false;
     }
   };
 
