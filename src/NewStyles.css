@@ -411,3 +411,93 @@ body.dark {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     z-index: 100;
 }
+
+/* --- Navigation Bar --- */
+.navigation-bar {
+  /* Mobile-first: styles for bottom bar on mobile */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65px; /* Adjust height as needed */
+  background: var(--background-glass);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-color);
+  z-index: 100;
+  padding: 0 1rem;
+  display: block; /* Hidden on desktop by default in this setup */
+}
+
+.navigation-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 100%;
+  max-width: 500px; /* Max width on mobile */
+  margin: 0 auto;
+}
+
+.nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-color);
+  text-decoration: none;
+  font-size: 0.75rem; /* 12px */
+  padding: 0.5rem;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
+}
+
+.nav-link.active,
+.nav-link:hover {
+  color: var(--primary-color);
+}
+.nav-link.active span, .nav-link:hover span {
+    font-weight: 600;
+}
+
+
+/* Desktop styles */
+@media (min-width: 768px) {
+  .navigation-bar {
+    /* Reset mobile styles */
+    position: static;
+    display: block;
+    height: auto;
+    border-top: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
+    backdrop-filter: none;
+    background: var(--background-body);
+  }
+
+  .navigation-content {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    justify-content: flex-start; /* Align to the left */
+    gap: 1.5rem;
+    height: auto;
+  }
+
+  .nav-link {
+    flex-direction: row;
+    font-size: 0.875rem; /* 14px */
+    padding: 1rem 0.5rem;
+    gap: 8px;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    margin-bottom: -1px; /* Overlap the main border */
+  }
+
+  .nav-link.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+  }
+   .nav-link:hover {
+    color: var(--primary-color);
+    border-bottom-color: transparent; /* No border on hover */
+  }
+}
