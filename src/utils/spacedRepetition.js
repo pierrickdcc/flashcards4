@@ -1,37 +1,142 @@
+// src/utils/spacedRepetition.js
+
+const DEFAULT_EASE_FACTOR = 2.5;
+const MIN_EASE_FACTOR = 1.3;
+
+// Helper to get the due date string
+const getDueDate = (days) => {
+  const date = new Date();
+  // Set time to a consistent point to avoid timezone issues affecting the date
+  date.setHours(5, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
+};
+
 /**
- * Calculates the next review date for a flashcard based on user performance.
- * @param {number} quality - The quality of the review (0-5).
- * @param {number} interval - The current interval in days.
- * @param {number} easiness - The current easiness factor.
- * @returns {{interval: number, easiness: number, nextReview: string}} - The new interval, easiness factor, and next review date.
+ * Calculates the next review data for a flashcard based on the SM-2 algorithm principles.
+ * @param {object} progress - The current progress object of the card.
+ *   Expected properties: { interval: number, easeFactor: number, status: 'new'|'learning'|'review' }
+ * @param {number} rating - The user's rating of recall difficulty (1: Again, 2: Hard, 3: Good, 4: Easy, 5: Very Easy).
+ * @returns {{interval: number, easeFactor: number, status: string, dueDate: string}} - The updated progress data.
  */
-export const calculateNextReview = (quality, interval, easiness, reviewCount) => {
-  // Quality < 3 means the user struggled. Reset progress.
-  if (quality < 3) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1); // Review again tomorrow
-    return { interval: 1, easiness, nextReview: tomorrow.toISOString() };
+export const calculateSrsData = (progress, rating) => {
+  let {
+    interval = 0,
+    easeFactor = DEFAULT_EASE_FACTOR,
+    status = 'new',
+  } = progress || {};
+
+  // --- Handle New or Learning Cards ---
+  if (status === 'new' || status === 'learning') {
+    switch (rating) {
+      case 1: // "Again": User failed, restart learning for this card.
+        return {
+          interval: 1,
+          easeFactor: Math.max(MIN_EASE_FACTOR, easeFactor - 0.2),
+          status: 'learning',
+          dueDate: getDueDate(1),
+        };
+      case 2: // "Hard": Show again tomorrow.
+        return {
+          interval: 1,
+          easeFactor: easeFactor, // No EF change in learning phase
+          status: 'learning',
+          dueDate: getDueDate(1),
+        };
+      case 3: // "Good": Graduate to the review phase. First interval is 1 day.
+        return {
+          interval: 1,
+          easeFactor: easeFactor,
+          status: 'review',
+          dueDate: getDueDate(1),
+        };
+      case 4: // "Easy": Graduate and set a longer first interval.
+        return {
+          interval: 4,
+          easeFactor: easeFactor + 0.15,
+          status: 'review',
+          dueDate: getDueDate(4),
+        };
+      case 5: // "Very Easy": Should be rare for a new card, but graduate with a very long interval.
+        return {
+          interval: 7,
+          easeFactor: easeFactor + 0.3,
+          status: 'review',
+          dueDate: getDueDate(7),
+        };
+      default:
+        // Fallback for safety
+        return {
+          interval: 1,
+          easeFactor,
+          status: 'learning',
+          dueDate: getDueDate(1),
+        };
+    }
   }
 
-  let newEasiness = easiness + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  if (newEasiness < 1.3) newEasiness = 1.3;
+  // --- Handle Mature/Review Cards ---
+  if (status === 'review') {
+    // RATING 1: LAPSE - The user forgot the card.
+    if (rating === 1) {
+      return {
+        interval: 1, // Reset interval
+        easeFactor: Math.max(MIN_EASE_FACTOR, easeFactor - 0.2), // Penalize ease factor
+        status: 'learning', // Demote card back to learning phase
+        dueDate: getDueDate(1),
+      };
+    }
 
-  let newInterval;
-  // Use reviewCount for a more robust initial interval calculation
-  if (reviewCount === 0) {
-    newInterval = 1; // 1st successful review -> 1 day
-  } else if (reviewCount === 1) {
-    newInterval = 6; // 2nd successful review -> 6 days
-  } else {
-    newInterval = Math.ceil(interval * newEasiness);
+    // SUCCESSFUL REVIEW (Ratings 2, 3, 4, 5)
+    let newInterval;
+    let newEaseFactor = easeFactor;
+
+    // Special case for the first review after graduating
+    if (interval <= 1) {
+      newInterval = 6;
+    } else {
+      // Calculate interval based on rating
+      switch (rating) {
+        case 2: // "Hard": Success, but difficult. Small interval increase.
+          newEaseFactor = Math.max(MIN_EASE_FACTOR, easeFactor - 0.15);
+          newInterval = Math.round(interval * 1.2);
+          break;
+        case 3: // "Good": Standard success.
+          // Ease factor remains unchanged
+          newInterval = Math.round(interval * easeFactor);
+          break;
+        case 4: // "Easy": High success. Increase EF and add bonus to interval.
+          newEaseFactor += 0.15;
+          newInterval = Math.round(interval * newEaseFactor * 1.3);
+          break;
+        case 5: // "Very Easy": Trivial. Increase EF and add a large bonus.
+          newEaseFactor += 0.25;
+          newInterval = Math.round(interval * newEaseFactor * 1.8);
+          break;
+        default:
+          newInterval = interval; // Should not happen
+          break;
+      }
+    }
+
+    // Safety check to ensure the interval always increases on success.
+    if (newInterval <= interval) {
+      newInterval = interval + 1;
+    }
+
+    return {
+      interval: newInterval,
+      easeFactor: newEaseFactor,
+      status: 'review',
+      dueDate: getDueDate(newInterval),
+    };
   }
 
-  const nextReview = new Date();
-  nextReview.setDate(nextReview.getDate() + newInterval);
-
+  // Fallback for any unknown status, reset to a learning state.
   return {
-    interval: newInterval,
-    easiness: newEasiness,
-    nextReview: nextReview.toISOString(),
+    interval: 1,
+    easeFactor: DEFAULT_EASE_FACTOR,
+    status: 'learning',
+    dueDate: getDueDate(1),
   };
 };
