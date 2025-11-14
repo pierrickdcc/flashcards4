@@ -565,10 +565,13 @@ const formatUserCardProgressForSupabase = (progress) => ({
       .where({ card_id: currentCard.id, user_id: userId })
       .first();
 
+    const reviewCount = progress?.reviewCount || 0;
+
     const { nextReview, interval, easiness } = calculateNextReview(
       quality,
-      progress?.interval || 1,
-      progress?.easiness || 2.5
+      progress?.interval || 0,
+      progress?.easiness || 2.5,
+      reviewCount
     );
 
     // Ensure nextReview is a Date object before calling toISOString
@@ -580,7 +583,7 @@ const formatUserCardProgressForSupabase = (progress) => ({
       nextReview: nextReviewDate.toISOString(),
       interval,
       easiness,
-      reviewCount: (progress?.reviewCount || 0) + 1,
+      reviewCount: quality >= 3 ? (progress?.reviewCount || 0) + 1 : 0,
       updatedAt: new Date().toISOString(),
       isSynced: false,
     };
