@@ -8,6 +8,7 @@ import CourseList from './CourseList';
 import CardGrid from './CardGrid';
 import CardTable from './CardTable';
 import Dashboard from './Dashboard';
+import MemoWall from './MemoWall';
 import ConfigModal from './ConfigModal';
 import BulkAddModal from './BulkAddModal';
 import AddSubjectModal from './AddSubjectModal';
@@ -105,6 +106,9 @@ const HomePage = ({
         )}
         {view === 'dashboard' && (
           <Dashboard />
+        )}
+        {view === 'memos' && (
+          <MemoWall />
         )}
       </main>
 

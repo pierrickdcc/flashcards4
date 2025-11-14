@@ -87,6 +87,30 @@ CREATE INDEX idx_user_card_progress_user_id_next_review ON public.user_card_prog
 
 
 -- =============================================
+-- Table: memos
+-- Description: Stocke les mémos (post-it) créés par les utilisateurs.
+-- =============================================
+CREATE TABLE public.memos (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL,
+    workspace_id uuid NOT NULL,
+    content text,
+    color text NOT NULL DEFAULT 'yellow',
+    course_id uuid,
+    is_pinned boolean NOT NULL DEFAULT false,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT memos_pkey PRIMARY KEY (id),
+    CONSTRAINT memos_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+    CONSTRAINT memos_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id) ON DELETE SET NULL
+);
+
+-- Index pour accélérer les recherches
+CREATE INDEX idx_memos_workspace_id ON public.memos USING btree (workspace_id);
+CREATE INDEX idx_memos_user_id ON public.memos USING btree (user_id);
+
+
+-- =============================================
 -- Row Level Security (RLS)
 -- =============================================
 
@@ -95,6 +119,7 @@ ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_card_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.memos ENABLE ROW LEVEL SECURITY;
 
 -- Politiques pour la table "subjects"
 CREATE POLICY "Les utilisateurs peuvent voir leurs propres matières" ON public.subjects
@@ -146,4 +171,17 @@ CREATE POLICY "Les utilisateurs peuvent mettre à jour leur propre progression" 
     FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Les utilisateurs peuvent supprimer leur propre progression" ON public.user_card_progress
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Politiques pour la table "memos"
+CREATE POLICY "Les utilisateurs peuvent voir leurs propres mémos" ON public.memos
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Les utilisateurs peuvent insérer leurs propres mémos" ON public.memos
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Les utilisateurs peuvent mettre à jour leurs propres mémos" ON public.memos
+    FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Les utilisateurs peuvent supprimer leurs propres mémos" ON public.memos
     FOR DELETE USING (auth.uid() = user_id);

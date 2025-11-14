@@ -18,6 +18,7 @@ export const DataSyncProvider = ({ children }) => {
   const cards = useLiveQuery(() => db.cards.toArray(), []);
   const subjects = useLiveQuery(() => db.subjects.toArray(), []);
   const courses = useLiveQuery(() => db.courses.toArray(), []);
+  const memos = useLiveQuery(() => db.memos.toArray(), []);
 
   useEffect(() => {
     const savedLastSync = localStorage.getItem(LOCAL_STORAGE_KEYS.LAST_SYNC);
@@ -63,6 +64,9 @@ export const DataSyncProvider = ({ children }) => {
         case TABLE_NAMES.COURSES:
           dbTable = db.courses;
           break;
+        case TABLE_NAMES.MEMOS:
+          dbTable = db.memos;
+          break;
         default:
           return;
       }
@@ -103,10 +107,15 @@ export const DataSyncProvider = ({ children }) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'courses' }, handleChanges)
       .subscribe();
 
+    const memosChannel = supabase.channel(`public:memos:workspace_id=eq.${workspaceId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'memos' }, handleChanges)
+      .subscribe();
+
     return () => {
       supabase.removeChannel(cardsChannel);
       supabase.removeChannel(subjectsChannel);
       supabase.removeChannel(coursesChannel);
+      supabase.removeChannel(memosChannel);
     };
   }, [session, workspaceId]);
 
@@ -122,13 +131,14 @@ export const DataSyncProvider = ({ children }) => {
       const { data: cloudCards, error: cardsError } = await supabase.from(TABLE_NAMES.CARDS).select('*').eq('workspace_id', workspaceId).gte('updated_at', lastSyncTime);
       const { data: cloudSubjects, error: subjectsError } = await supabase.from(TABLE_NAMES.SUBJECTS).select('*').eq('workspace_id', workspaceId).gte('updated_at', lastSyncTime);
       const { data: cloudCourses, error: coursesError } = await supabase.from(TABLE_NAMES.COURSES).select('*').eq('workspace_id', workspaceId).gte('updated_at', lastSyncTime);
+      const { data: cloudMemos, error: memosError } = await supabase.from(TABLE_NAMES.MEMOS).select('*').eq('workspace_id', workspaceId).gte('updated_at', lastSyncTime);
       const { data: cloudProgress, error: progressError } = await supabase.from(TABLE_NAMES.USER_CARD_PROGRESS).select('*').eq('user_id', session.user.id).gte('updated_at', lastSyncTime);
 
-      if (cardsError || subjectsError || coursesError || progressError) {
-        throw cardsError || subjectsError || coursesError || progressError;
+      if (cardsError || subjectsError || coursesError || memosError || progressError) {
+        throw cardsError || subjectsError || coursesError || memosError || progressError;
       }
 
-      await db.transaction('rw', db.cards, db.subjects, db.courses, db.user_card_progress, async () => {
+      await db.transaction('rw', db.cards, db.subjects, db.courses, db.memos, db.user_card_progress, async () => {
         if (cloudCards.length > 0) {
             const formattedCards = cloudCards.map(formatCardFromSupabase);
             const cloudCardIds = formattedCards.map(c => c.id);
@@ -176,6 +186,23 @@ export const DataSyncProvider = ({ children }) => {
             }
             if (coursesToUpdate.length > 0) await db.courses.bulkPut(coursesToUpdate);
         }
+
+        if (cloudMemos.length > 0) {
+            const formattedMemos = cloudMemos.map(formatMemoFromSupabase);
+            const cloudMemoIds = formattedMemos.map(m => m.id);
+            const localMemos = await db.memos.where('id').anyOf(cloudMemoIds).toArray();
+            const localMemoMap = new Map(localMemos.map(m => [m.id, m]));
+            const memosToUpdate = [];
+
+            for (const cloudMemo of formattedMemos) {
+                const localMemo = localMemoMap.get(cloudMemo.id);
+                if (!localMemo || new Date(cloudMemo.updatedAt) > new Date(localMemo.updatedAt)) {
+                    memosToUpdate.push({ ...cloudMemo, isSynced: true });
+                }
+            }
+            if (memosToUpdate.length > 0) await db.memos.bulkPut(memosToUpdate);
+        }
+
         if (cloudProgress.length > 0) {
             const formattedProgress = cloudProgress.map(formatUserCardProgressFromSupabase);
             const cloudProgressIds = formattedProgress.map(p => p.id);
@@ -197,6 +224,7 @@ export const DataSyncProvider = ({ children }) => {
       const localUnsyncedCards = await db.cards.where('isSynced').equals(false).toArray();
       const localUnsyncedSubjects = await db.subjects.where('isSynced').equals(false).toArray();
       const localUnsyncedCourses = await db.courses.where('isSynced').equals(false).toArray();
+      const localUnsyncedMemos = await db.memos.where('isSynced').equals(false).toArray();
       const localUnsyncedProgress = await db.user_card_progress.where('isSynced').equals(false).toArray();
 
       // 2. Préparer les données pour Supabase
@@ -214,6 +242,7 @@ export const DataSyncProvider = ({ children }) => {
       const cardsToSync = localUnsyncedCards.map(c => formatForSupabase(c, formatCardForSupabase));
       const subjectsToSync = localUnsyncedSubjects.map(s => formatForSupabase(s, formatSubjectForSupabase));
       const coursesToSync = localUnsyncedCourses.map(c => formatForSupabase(c, formatCourseForSupabase));
+      const memosToSync = localUnsyncedMemos.map(m => formatForSupabase(m, formatMemoForSupabase));
       const progressToSync = localUnsyncedProgress.map(p => formatForSupabase(p, formatUserCardProgressForSupabase));
 
       // 3. Envoyer les modifications à Supabase
@@ -258,6 +287,11 @@ export const DataSyncProvider = ({ children }) => {
         if (error) throw error;
         await db.courses.where('isSynced').equals(false).and(course => !course.id.startsWith('local_')).modify({ isSynced: true });
       }
+      if (memosToSync.length > 0) {
+        const { error } = await supabase.from(TABLE_NAMES.MEMOS).upsert(memosToSync);
+        if (error) throw error;
+        await db.memos.where('isSynced').equals(false).and(memo => !memo.id.startsWith('local_')).modify({ isSynced: true });
+      }
       if (progressToSync.length > 0) {
         const { error } = await supabase.from(TABLE_NAMES.USER_CARD_PROGRESS).upsert(progressToSync);
         if (error) throw error;
@@ -271,6 +305,9 @@ export const DataSyncProvider = ({ children }) => {
 
       const localCoursesWithTempId = await db.courses.where('id').startsWith('local_').toArray();
       if(localCoursesWithTempId.length > 0) await db.courses.bulkDelete(localCoursesWithTempId.map(c => c.id));
+
+      const localMemosWithTempId = await db.memos.where('id').startsWith('local_').toArray();
+      if(localMemosWithTempId.length > 0) await db.memos.bulkDelete(localMemosWithTempId.map(m => m.id));
 
       const localProgressWithTempId = await db.user_card_progress.where('id').startsWith('local_').toArray();
       if(localProgressWithTempId.length > 0) await db.user_card_progress.bulkDelete(localProgressWithTempId.map(p => p.id));
@@ -340,6 +377,23 @@ const formatCourseForSupabase = (course) => ({
   updated_at: course.updatedAt,
   workspace_id: course.workspace_id,
   user_id: session.user.id,
+});
+
+const formatMemoFromSupabase = (memo) => ({
+  ...memo,
+  updatedAt: memo.updated_at,
+  workspace_id: memo.workspace_id,
+  isPinned: memo.is_pinned,
+  courseId: memo.course_id,
+});
+
+const formatMemoForSupabase = (memo) => ({
+  ...memo,
+  updated_at: memo.updatedAt,
+  workspace_id: memo.workspace_id,
+  user_id: session.user.id,
+  is_pinned: memo.isPinned,
+  course_id: memo.courseId,
 });
 
 const formatUserCardProgressFromSupabase = (progress) => ({
@@ -562,6 +616,40 @@ const formatUserCardProgressForSupabase = (progress) => ({
     }
   };
 
+  const addMemo = async (memo) => {
+    const newMemo = {
+      ...memo,
+      id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      workspace_id: workspaceId,
+      isSynced: false,
+    };
+    await db.memos.add(newMemo);
+    toast.success('Mémo ajouté !');
+    if (isOnline) {
+      syncToCloud();
+    }
+  };
+
+  const updateMemoWithSync = async (id, updates) => {
+    const updatedMemo = { ...updates, updatedAt: new Date().toISOString(), isSynced: false };
+    await db.memos.update(id, updatedMemo);
+    toast.success('Mémo mis à jour !');
+    if (isOnline) {
+      syncToCloud();
+    }
+  };
+
+  const deleteMemoWithSync = async (id) => {
+    await db.memos.delete(id);
+    await db.deletionsPending.add({ id, tableName: TABLE_NAMES.MEMOS });
+    toast.success('Mémo supprimé !');
+    if (isOnline) {
+      syncToCloud();
+    }
+  };
+
   const signOut = async () => {
     const syncSuccessful = await syncToCloud();
     if (!syncSuccessful) {
@@ -625,9 +713,10 @@ const formatUserCardProgressForSupabase = (progress) => ({
   };
 
   const value = {
-    cards, subjects, courses, isOnline, isSyncing, lastSync, syncToCloud,
+    cards, subjects, courses, memos, isOnline, isSyncing, lastSync, syncToCloud,
     addCard, updateCardWithSync, deleteCardWithSync, handleBulkAdd, addSubject,
     handleDeleteCardsOfSubject, handleReassignCardsOfSubject, reviewCard, addCourse,
+    addMemo, updateMemoWithSync, deleteMemoWithSync,
     signOut, getCardsToReview, startReview,
   };
 

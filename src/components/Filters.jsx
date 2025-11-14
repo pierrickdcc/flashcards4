@@ -1,7 +1,7 @@
 import React from 'react';
 import { useUIState } from '../context/UIStateContext';
 import { useDataSync } from '../context/DataSyncContext';
-import { LayoutGrid, List, Play, BarChart3, Book } from 'lucide-react';
+import { LayoutGrid, List, Play, BarChart3, Book, ClipboardList } from 'lucide-react';
 
 const Filters = ({ view, setView }) => {
   const { subjects = [] } = useDataSync();
@@ -62,6 +62,9 @@ const Filters = ({ view, setView }) => {
           </button>
           <button onClick={() => setView('courses')} className={view === 'courses' ? 'active' : ''}>
             <Book size={18} />
+          </button>
+          <button onClick={() => setView('memos')} className={view === 'memos' ? 'active' : ''}>
+            <ClipboardList size={18} />
           </button>
         </div>
 
