@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared'; // Import the theme
 import { supabase } from '../supabaseClient';
 import { motion } from 'framer-motion';
 
@@ -42,7 +43,7 @@ const Auth = () => {
       >
         <div className="bg-background-glass backdrop-blur-xl border border-border rounded-2xl p-10 shadow-2xl text-center">
           <div className="flex items-center justify-center gap-3 text-2xl font-bold mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokelinejoin="round" className="text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
             </svg>
             <span className="logo-text text-3xl">Flashcards Pro</span>
@@ -52,6 +53,7 @@ const Auth = () => {
           <SupabaseAuth
             supabaseClient={supabase}
             appearance={{
+              theme: ThemeSupa, // Add the theme here
               style: {
                 button: {
                   background: 'var(--primary-gradient)',
