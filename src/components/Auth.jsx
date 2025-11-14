@@ -33,11 +33,11 @@ const Auth = () => {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen p-4"
+      className="grid place-items-center min-h-screen p-4"
       style={{ backgroundImage: 'linear-gradient(160deg, #1e3a8a20 0%, #0e1116 100%)' }}
     >
       <motion.div
-        className="w-full max-w-sm bg-glass backdrop-blur-lg border border-border rounded-2xl p-10 shadow-2xl text-center"
+        className="w-full max-w-sm bg-glass backdrop-blur-lg border-2 border-white/20 rounded-2xl p-10 shadow-lg shadow-primary/20 text-center"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
