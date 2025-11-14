@@ -668,7 +668,7 @@ const formatUserCardProgressForSupabase = (progress) => ({
   const getCardsToReview = async (subjectsArray = ['all'], options = {}) => {
     const { includeFuture = false } = options;
     const userId = session?.user?.id;
-    if (!userId || !cards) return [];
+    if (!userId) return [];
 
     const now = new Date();
     const allUserProgress = await db.user_card_progress.where('user_id').equals(userId).toArray();
