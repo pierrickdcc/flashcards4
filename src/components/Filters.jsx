@@ -1,77 +1,73 @@
 import React from 'react';
 import { useUIState } from '../context/UIStateContext';
 import { useDataSync } from '../context/DataSyncContext';
-import { LayoutGrid, List, Play, BarChart3, Book, ClipboardList } from 'lucide-react';
+import { LayoutGrid, List, Book, ClipboardList, BarChart3, X } from 'lucide-react';
 
 const Filters = ({ view, setView }) => {
   const { subjects = [] } = useDataSync();
-  const {
-    selectedSubjects,
-    setSelectedSubjects,
-  } = useUIState();
+  const { selectedSubjects, setSelectedSubjects } = useUIState();
 
-  const handleSubjectChange = (subjectName) => {
-    if (subjectName === 'all') {
+  const handleSubjectChange = (subjectId) => {
+    if (subjectId === 'all') {
       setSelectedSubjects(['all']);
     } else {
-      const newSelectedSubjects = selectedSubjects.includes('all')
-        ? [subjectName]
-        : selectedSubjects.includes(subjectName)
-          ? selectedSubjects.filter((s) => s !== subjectName)
-          : [...selectedSubjects, subjectName];
+      let newSelection = selectedSubjects.includes('all') ? [] : [...selectedSubjects];
 
-      if (newSelectedSubjects.length === 0) {
+      if (newSelection.includes(subjectId)) {
+        newSelection = newSelection.filter(id => id !== subjectId);
+      } else {
+        newSelection.push(subjectId);
+      }
+
+      if (newSelection.length === 0) {
         setSelectedSubjects(['all']);
       } else {
-        setSelectedSubjects(newSelectedSubjects);
+        setSelectedSubjects(newSelection);
       }
     }
   };
 
+  const viewOptions = [
+    { id: 'dashboard', icon: BarChart3, label: 'Tableau de bord' },
+    { id: 'courses', icon: Book, label: 'Cours' },
+    { id: 'cards', icon: LayoutGrid, label: 'Cartes' },
+    { id: 'table', icon: List, label: 'Tableau' },
+    { id: 'memos', icon: ClipboardList, label: 'Mémos' },
+  ];
+
   return (
-    <div className="filters">
-      <div className="flex flex-wrap items-center gap-6">
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={selectedSubjects.includes('all')}
-              onChange={() => handleSubjectChange('all')}
-            />
-            Toutes les matières
-          </label>
-          {subjects.map((subject) => (
-            <label key={subject.id} className="flex items-center gap-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedSubjects.includes(subject.name)}
-                onChange={() => handleSubjectChange(subject.name)}
-                disabled={selectedSubjects.includes('all')}
-              />
-              {subject.name}
-            </label>
-          ))}
-        </div>
+    <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      {/* Subject Filters (simplified for the new UI) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 cursor-pointer text-sm">
+          <input
+            type="checkbox"
+            className="accent-primary"
+            checked={selectedSubjects.includes('all')}
+            onChange={() => handleSubjectChange('all')}
+          />
+          Toutes les matières
+        </label>
+        {/* Simplified view, maybe a dropdown for subjects would be better in the future */}
+      </div>
 
-        <div className="view-toggle">
-          <button onClick={() => setView('cards')} className={view === 'cards' ? 'active' : ''}>
-            <LayoutGrid size={18} />
+      {/* View Toggle */}
+      <div className="flex items-center bg-white/5 border border-border rounded-lg p-1">
+        {viewOptions.map(option => (
+          <button
+            key={option.id}
+            onClick={() => setView(option.id)}
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors ${
+              view === option.id
+                ? 'bg-primary/20 text-text-heading-color'
+                : 'text-muted-foreground hover:text-text-heading-color'
+            }`}
+            title={option.label}
+          >
+            <option.icon size={16} />
+            <span className="hidden sm:inline">{option.label}</span>
           </button>
-          <button onClick={() => setView('table')} className={view === 'table' ? 'active' : ''}>
-            <List size={18} />
-          </button>
-          <button onClick={() => setView('courses')} className={view === 'courses' ? 'active' : ''}>
-            <Book size={18} />
-          </button>
-          <button onClick={() => setView('memos')} className={view === 'memos' ? 'active' : ''}>
-            <ClipboardList size={18} />
-          </button>
-        </div>
-
-        <button className="btn-secondary" onClick={() => setView('dashboard')}>
-          <BarChart3 size={18} />
-           Tableau de bord
-        </button>
+        ))}
       </div>
     </div>
   );

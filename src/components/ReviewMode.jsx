@@ -2,24 +2,25 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDataSync } from '../context/DataSyncContext';
 import { useUIState } from '../context/UIStateContext';
-import { X, CheckCircle, RotateCcw, Home, BookOpen } from 'lucide-react';
+import { X, RotateCcw, BookOpen, CheckCircle, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const ReviewMode = () => {
   const { reviewCard, subjects } = useDataSync();
   const { setReviewMode, reviewCards, setReviewCards } = useUIState();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [direction, setDirection] = useState(1);
 
   const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s.name])), [subjects]);
   const currentCard = reviewCards[currentIndex];
 
-  const handleAnswer = async (rating) => {
+  const handleRating = async (rating) => {
     if (!currentCard) return;
-
+    setDirection(1); // Set direction for next card animation
     await reviewCard(currentCard.id, rating);
-    setShowAnswer(false);
+    setIsFlipped(false);
 
     setTimeout(() => {
       if (currentIndex < reviewCards.length - 1) {
@@ -27,185 +28,145 @@ const ReviewMode = () => {
       } else {
         setIsFinished(true);
       }
-    }, 300);
+    }, 200); // Wait for flip-back animation
   };
 
   const handleRestart = () => {
-    const shuffledCards = [...reviewCards].sort(() => Math.random() - 0.5);
-    setReviewCards(shuffledCards);
+    setReviewCards([...reviewCards].sort(() => Math.random() - 0.5));
     setCurrentIndex(0);
-    setShowAnswer(false);
+    setIsFlipped(false);
     setIsFinished(false);
   };
 
-  const handleExit = () => {
-    setReviewMode(false);
-  };
+  const handleExit = () => setReviewMode(false);
 
+  // Finished Screen
   if (isFinished) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <CheckCircle size={72} className="text-green-500" />
-          <div className='flex flex-col gap-2'>
-            <h2 className="text-4xl font-bold text-foreground">Session terminée !</h2>
-            <p className="text-muted-foreground text-lg">Bravo, vous avez terminé votre session de révision.</p>
-          </div>
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <button onClick={handleRestart} className="btn-secondary text-base py-3 px-6">
-              <RotateCcw size={18} className="mr-2" />
-              <span>Recommencer</span>
-            </button>
-            <button onClick={handleExit} className="btn-primary text-base py-3 px-6">
-              <Home size={18} className="mr-2" />
-              <span>Retour à l'accueil</span>
-            </button>
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-4">
+          <CheckCircle size={64} className="text-green-500" />
+          <h2 className="text-3xl font-bold">Session terminée !</h2>
+          <p className="text-muted-foreground">Bravo, vous avez terminé votre session de révision.</p>
+          <div className="flex gap-4 mt-4">
+            <button onClick={handleRestart} className="btn-secondary px-5 py-2.5 rounded-lg"><RotateCcw size={16} /> Recommencer</button>
+            <button onClick={handleExit} className="btn-primary px-5 py-2.5 rounded-lg"><Home size={16} /> Accueil</button>
           </div>
         </motion.div>
       </div>
     );
   }
 
-  if (!currentCard) {
-    return (
-      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
-        <p className="text-foreground">Chargement des cartes...</p>
-      </div>
-    );
-  }
+  if (!currentCard) return <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">Chargement...</div>;
 
-  const currentSubjectName = subjectMap.get(currentCard.subject_id) || 'N/A';
-  const totalCards = reviewCards.length;
-  const progressPercentage = totalCards > 0 ? ((currentIndex + 1) / totalCards) * 100 : 0;
+  const progress = (currentIndex / reviewCards.length) * 100;
 
-  // Progress Bar Logic
-  const ProgressBar = () => {
-    const isSegmented = totalCards > 0 && totalCards < 20;
-
-    if (isSegmented) {
-      return (
-        <div className="flex gap-1.5 w-full">
-          {Array.from({ length: totalCards }).map((_, i) => (
-            <div
-              key={i}
-              className={`flex-1 h-2 rounded-full transition-colors duration-300 ${
-                i < currentIndex + 1 ? 'bg-primary' : 'bg-muted'
-              }`}
-            />
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <div className="w-full bg-muted rounded-full h-2.5">
-        <motion.div
-          className="bg-primary h-2.5 rounded-full"
-          animate={{ width: `${progressPercentage}%` }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        />
-      </div>
-    );
+  const cardVariants = {
+    enter: (direction) => ({
+      x: direction > 0 ? 100 : -100,
+      opacity: 0,
+      scale: 0.9,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+      scale: 1,
+    },
+    exit: (direction) => ({
+      zIndex: 0,
+      x: direction < 0 ? 100 : -100,
+      opacity: 0,
+      scale: 0.9,
+    }),
   };
 
+  const ratingButtons = [
+    { label: 'À revoir', rating: 1, color: 'bg-red-500' },
+    { label: 'Difficile', rating: 2, color: 'bg-orange-500' },
+    { label: 'Moyen', rating: 3, color: 'bg-yellow-500' },
+    { label: 'Facile', rating: 4, color: 'bg-blue-500' },
+    { label: 'Très facile', rating: 5, color: 'bg-green-500' },
+  ];
+
   return (
-    <div className="fixed inset-0 bg-background z-50 flex h-screen flex-col items-center p-4 sm:p-6 md:p-8">
+    <div className="fixed inset-0 bg-background z-50 flex h-screen flex-col items-center p-4 sm:p-6">
       {/* Header */}
-      <header className="w-full max-w-5xl flex items-center justify-between">
+      <header className="w-full max-w-4xl flex items-center gap-6 py-2">
         <Link to="/" className="flex items-center gap-2 text-decoration-none">
-          <BookOpen className="text-primary" size={28} />
-          <span className="logo-text">Flashcards Pro</span>
+          <BookOpen className="text-primary" size={24} />
+          <span className="logo-text text-lg font-bold">Flashcards Pro</span>
         </Link>
+        <div className="flex-grow flex items-center gap-4">
+          <div className="w-full bg-muted rounded-full h-2">
+            <motion.div className="bg-primary h-2 rounded-full" animate={{ width: `${progress}%` }} />
+          </div>
+          <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">{currentIndex} / {reviewCards.length}</span>
+        </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleRestart} className="p-2 rounded-full bg-muted text-foreground hover:bg-opacity-80 transition-colors">
-            <RotateCcw size={20} />
-          </button>
-          <button onClick={handleExit} className="p-2 rounded-full bg-muted text-foreground hover:bg-opacity-80 transition-colors">
-            <X size={24} />
-          </button>
+            <button onClick={handleRestart} title="Recommencer" className="p-2 rounded-full hover:bg-white/10"><RotateCcw size={18} /></button>
+            <button onClick={handleExit} title="Quitter" className="p-2 rounded-full hover:bg-white/10"><X size={22} /></button>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl">
-        <div className="w-full max-w-2xl mb-4">
-          <ProgressBar />
-          <p className="text-center text-sm text-muted-foreground mt-2">
-            Carte {currentIndex + 1} sur {totalCards}
-          </p>
-        </div>
-
-        <div className="w-full flex-1 flex items-center justify-center perspective">
-          <AnimatePresence>
+      {/* Main Card Area */}
+      <main className="flex-1 flex flex-col items-center justify-center w-full overflow-hidden">
+        <div className="w-full max-w-4xl aspect-[16/9] max-h-[500px] perspective">
+          <AnimatePresence initial={false} custom={direction}>
             <motion.div
-              key={currentCard.id}
-              initial={{ opacity: 0, scale: 0.95, y: 50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -50 }}
-              transition={{ duration: 0.4 }}
-              className="w-full max-w-2xl aspect-[4/3]"
+              key={currentIndex}
+              custom={direction}
+              variants={cardVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+              className="w-full h-full"
             >
-              <div
-                className="relative w-full h-full cursor-pointer"
-                onClick={() => setShowAnswer(!showAnswer)}
+              <motion.div
+                className="w-full h-full preserve-3d"
+                animate={{ rotateY: isFlipped ? 180 : 0 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
               >
-                <motion.div
-                  className="absolute w-full h-full preserve-3d"
-                  animate={{ rotateY: showAnswer ? 180 : 0 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <div className="card-face-new card-face-front-new">
-                    <span className="card-subject-new">{currentSubjectName}</span>
-                    <p className="text-3xl md:text-4xl font-light text-center">
-                      {currentCard.question}
-                    </p>
-                    <div/>
-                  </div>
-                  <div className="card-face-new card-face-back-new">
-                    <span className="card-subject-new">{currentSubjectName}</span>
-                    <p className="text-2xl md:text-3xl font-light text-center">
-                      {currentCard.answer}
-                    </p>
-                    <div/>
-                  </div>
-                </motion.div>
-              </div>
+                {/* Front */}
+                <div className="card-face-new card-face-front-new" onClick={() => setIsFlipped(true)}>
+                  <span className="card-subject-new">{subjectMap.get(currentCard.subject_id)}</span>
+                  <p className="text-2xl md:text-3xl font-medium text-center">{currentCard.question}</p>
+                  <div />
+                </div>
+                {/* Back */}
+                <div className="card-face-new card-face-back-new">
+                  <span className="card-subject-new">{subjectMap.get(currentCard.subject_id)}</span>
+                  <p className="text-xl md:text-2xl font-medium text-center">{currentCard.answer}</p>
+                  <div />
+                </div>
+              </motion.div>
             </motion.div>
           </AnimatePresence>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-5xl h-28 flex items-center justify-center">
+      <footer className="w-full h-28 flex items-center justify-center">
         <AnimatePresence mode="wait">
-          {!showAnswer ? (
-            <motion.button
-              key="flip"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              onClick={() => setShowAnswer(true)}
-              className="btn-primary text-lg px-12 py-4"
+          {!isFlipped ? (
+            <motion.button key="flip" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+              onClick={() => setIsFlipped(true)}
+              className="btn-primary px-8 py-3 rounded-lg text-base font-semibold"
             >
               Retourner la carte
             </motion.button>
           ) : (
-            <motion.div
-              key="difficulty"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="flex items-center justify-center gap-2 md:gap-3 flex-wrap"
+            <motion.div key="ratings" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+              className="flex flex-wrap justify-center gap-3"
             >
-              <button onClick={() => handleAnswer(1)} className="px-4 py-2 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors">À revoir</button>
-              <button onClick={() => handleAnswer(2)} className="px-4 py-2 rounded-full text-white bg-orange-500 hover:bg-orange-600 transition-colors">Difficile</button>
-              <button onClick={() => handleAnswer(3)} className="px-4 py-2 rounded-full text-white bg-yellow-500 hover:bg-yellow-600 transition-colors">Moyen</button>
-              <button onClick={() => handleAnswer(4)} className="px-4 py-2 rounded-full text-white bg-blue-500 hover:bg-blue-600 transition-colors">Facile</button>
-              <button onClick={() => handleAnswer(5)} className="px-4 py-2 rounded-full text-white bg-green-500 hover:bg-green-600 transition-colors">Très facile</button>
+              {ratingButtons.map(btn => (
+                <button key={btn.rating} onClick={() => handleRating(btn.rating)}
+                  className={`px-5 py-2.5 rounded-lg text-white text-sm font-semibold transition-transform hover:scale-105 ${btn.color}`}
+                >
+                  {btn.label}
+                </button>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>

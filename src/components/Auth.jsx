@@ -1,84 +1,119 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../supabaseClient';
 import { motion } from 'framer-motion';
 
 const Auth = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [authView, setAuthView] = useState('sign_in');
   const [theme, setTheme] = useState('dark');
 
+  // This ensures the Supabase Auth UI theme matches the app's theme.
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     setTheme(savedTheme);
-  }, []);
+
+    const observer = new MutationObserver(() => {
+      const newTheme = localStorage.getItem('theme') || 'dark';
+      if (newTheme !== theme) {
+        setTheme(newTheme);
+      }
+    });
+
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, [theme]);
 
   const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.6, ease: "easeOut" }
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.5, ease: "easeOut" }
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <motion.div 
+    <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+      <motion.div
         className="w-full max-w-md"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 backdrop-blur-sm border border-white/20">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Flashcards Pro
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Apprenez plus intelligemment</p>
+        <div className="bg-background-glass backdrop-blur-xl border border-border rounded-2xl p-10 shadow-2xl text-center">
+          <div className="flex items-center justify-center gap-3 text-2xl font-bold mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokelinejoin="round" className="text-primary">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+            </svg>
+            <span className="logo-text text-3xl">Flashcards Pro</span>
           </div>
+          <p className="text-muted-foreground mb-8">Apprenez plus intelligemment</p>
 
-          <SupabaseAuth 
+          <SupabaseAuth
             supabaseClient={supabase}
-            appearance={{ 
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: 'rgb(59, 130, 246)',
-                    brandAccent: 'rgb(37, 99, 235)',
-                  }
-                }
-              },
+            appearance={{
               style: {
-                button: { 
-                  borderRadius: '0.75rem',
-                  fontWeight: '600'
+                button: {
+                  background: 'var(--primary-gradient)',
+                  color: 'white',
+                  borderRadius: '12px',
+                  fontWeight: '600',
+                  paddingTop: '0.85rem',
+                  paddingBottom: '0.85rem',
+                  marginTop: '0.5rem',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
                 },
-                input: { 
-                  borderRadius: '0.75rem' 
+                input: {
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  color: 'var(--text-heading-color)',
+                  padding: '0.85rem',
                 },
-                container: { 
-                  gap: '1rem' 
+                label: {
+                  color: 'var(--text-heading-color)',
+                  fontWeight: '500',
+                  textAlign: 'left',
+                },
+                anchor: {
+                  color: 'var(--text-muted-color)',
+                  textDecoration: 'none'
+                },
+                container: {
+                  gap: '1.25rem'
+                },
+                message: {
+                  color: 'var(--text-muted-color)'
                 }
               }
             }}
             theme={theme}
             providers={[]}
-            view={authView}
-            onViewChange={setAuthView}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: 'Adresse e-mail',
+                  password_label: 'Mot de passe',
+                  button_label: 'Se connecter',
+                  email_input_placeholder: 'vous@email.com',
+                  password_input_placeholder: '••••••••',
+                },
+                sign_up: {
+                  email_label: 'Adresse e-mail',
+                  password_label: 'Mot de passe',
+                  button_label: "S'inscrire",
+                  email_input_placeholder: 'vous@email.com',
+                  password_input_placeholder: '••••••••',
+                },
+                forgotten_password: {
+                  email_label: 'Adresse e-mail',
+                  button_label: 'Réinitialiser le mot de passe',
+                  email_input_placeholder: 'vous@email.com',
+                  link_text: 'Mot de passe oublié ?',
+                }
+              },
+            }}
           />
-
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Version 1.0 • Mode {navigator.onLine ? 'en ligne' : 'hors ligne'}</p>
-          </div>
         </div>
       </motion.div>
     </div>
