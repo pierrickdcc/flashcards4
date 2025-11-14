@@ -113,42 +113,33 @@ const ReviewMode = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex h-screen flex-col items-center p-4 sm:p-6 md:p-8 gap-4 md:gap-6">
+    <div className="fixed inset-0 bg-background z-50 flex h-screen flex-col items-center p-4 sm:p-6 md:p-8">
       {/* Header */}
-      <header className="w-full max-w-7xl flex items-center justify-between">
+      <header className="w-full max-w-5xl flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 text-decoration-none">
           <BookOpen className="text-primary" size={28} />
           <span className="logo-text">Flashcards Pro</span>
         </Link>
-        <AnimatePresence>
-          {!isFinished && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="flex items-center gap-2"
-            >
-              <button onClick={handleRestart} className="btn-icon">
-                <RotateCcw size={20} />
-              </button>
-              <button onClick={handleExit} className="btn-icon">
-                <X size={24} />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="flex items-center gap-2">
+          <button onClick={handleRestart} className="p-2 rounded-full bg-muted text-foreground hover:bg-opacity-80 transition-colors">
+            <RotateCcw size={20} />
+          </button>
+          <button onClick={handleExit} className="p-2 rounded-full bg-muted text-foreground hover:bg-opacity-80 transition-colors">
+            <X size={24} />
+          </button>
+        </div>
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-start w-full max-w-4xl gap-4 md:gap-6 pt-2 sm:pt-4 md:pt-8">
-        <div className="w-full">
+      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl">
+        <div className="w-full max-w-2xl mb-4">
           <ProgressBar />
           <p className="text-center text-sm text-muted-foreground mt-2">
             Carte {currentIndex + 1} sur {totalCards}
           </p>
         </div>
 
-        <div className="flex-1 w-full flex items-center justify-center perspective">
+        <div className="w-full flex-1 flex items-center justify-center perspective">
           <AnimatePresence>
             <motion.div
               key={currentCard.id}
@@ -156,7 +147,7 @@ const ReviewMode = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -50 }}
               transition={{ duration: 0.4 }}
-              className="w-full max-w-2xl h-[50vh] sm:h-[55vh]"
+              className="w-full max-w-2xl aspect-[4/3]"
             >
               <div
                 className="relative w-full h-full cursor-pointer"
@@ -168,15 +159,15 @@ const ReviewMode = () => {
                   transition={{ duration: 0.6 }}
                 >
                   <div className="card-face-new card-face-front-new">
-                     <span className="card-subject-new">{currentSubjectName}</span>
-                    <p className="text-3xl md:text-4xl font-light text-center text-gray-800">
+                    <span className="card-subject-new">{currentSubjectName}</span>
+                    <p className="text-3xl md:text-4xl font-light text-center">
                       {currentCard.question}
                     </p>
                     <div/>
                   </div>
                   <div className="card-face-new card-face-back-new">
                     <span className="card-subject-new">{currentSubjectName}</span>
-                    <p className="text-2xl md:text-3xl font-light text-center text-gray-800">
+                    <p className="text-2xl md:text-3xl font-light text-center">
                       {currentCard.answer}
                     </p>
                     <div/>
@@ -189,7 +180,7 @@ const ReviewMode = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-4xl h-24 flex items-center justify-center">
+      <footer className="w-full max-w-5xl h-28 flex items-center justify-center">
         <AnimatePresence mode="wait">
           {!showAnswer ? (
             <motion.button
@@ -210,11 +201,11 @@ const ReviewMode = () => {
               exit={{ opacity: 0, y: -20 }}
               className="flex items-center justify-center gap-2 md:gap-3 flex-wrap"
             >
-              <button onClick={() => handleAnswer(1)} className="difficulty-capsule capsule-red">À revoir</button>
-              <button onClick={() => handleAnswer(2)} className="difficulty-capsule capsule-orange">Difficile</button>
-              <button onClick={() => handleAnswer(3)} className="difficulty-capsule capsule-yellow">Moyen</button>
-              <button onClick={() => handleAnswer(4)} className="difficulty-capsule capsule-blue">Facile</button>
-              <button onClick={() => handleAnswer(5)} className="difficulty-capsule capsule-green">Très facile</button>
+              <button onClick={() => handleAnswer(1)} className="px-4 py-2 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors">À revoir</button>
+              <button onClick={() => handleAnswer(2)} className="px-4 py-2 rounded-full text-white bg-orange-500 hover:bg-orange-600 transition-colors">Difficile</button>
+              <button onClick={() => handleAnswer(3)} className="px-4 py-2 rounded-full text-white bg-yellow-500 hover:bg-yellow-600 transition-colors">Moyen</button>
+              <button onClick={() => handleAnswer(4)} className="px-4 py-2 rounded-full text-white bg-blue-500 hover:bg-blue-600 transition-colors">Facile</button>
+              <button onClick={() => handleAnswer(5)} className="px-4 py-2 rounded-full text-white bg-green-500 hover:bg-green-600 transition-colors">Très facile</button>
             </motion.div>
           )}
         </AnimatePresence>
