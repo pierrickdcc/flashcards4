@@ -5,17 +5,23 @@
  * @param {number} easiness - The current easiness factor.
  * @returns {{interval: number, easiness: number, nextReview: string}} - The new interval, easiness factor, and next review date.
  */
-export const calculateNextReview = (quality, interval, easiness) => {
+export const calculateNextReview = (quality, interval, easiness, reviewCount) => {
+  // Quality < 3 means the user struggled. Reset progress.
   if (quality < 3) {
-    return { interval: 1, easiness, nextReview: new Date().toISOString() };
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1); // Review again tomorrow
+    return { interval: 1, easiness, nextReview: tomorrow.toISOString() };
   }
 
   let newEasiness = easiness + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
   if (newEasiness < 1.3) newEasiness = 1.3;
 
   let newInterval;
-  if (interval === 1) {
-    newInterval = 6;
+  // Use reviewCount for a more robust initial interval calculation
+  if (reviewCount === 0) {
+    newInterval = 1; // 1st successful review -> 1 day
+  } else if (reviewCount === 1) {
+    newInterval = 6; // 2nd successful review -> 6 days
   } else {
     newInterval = Math.ceil(interval * newEasiness);
   }
@@ -23,5 +29,9 @@ export const calculateNextReview = (quality, interval, easiness) => {
   const nextReview = new Date();
   nextReview.setDate(nextReview.getDate() + newInterval);
 
-  return { interval: newInterval, easiness: newEasiness, nextReview: nextReview.toISOString() };
+  return {
+    interval: newInterval,
+    easiness: newEasiness,
+    nextReview: nextReview.toISOString(),
+  };
 };
