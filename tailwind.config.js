@@ -8,4 +8,6 @@ export default {
     extend: {},
   },
   plugins: [],
+  // J'ajoute ceci pour que Tailwind respecte votre ThemeContext (body.dark)
+  darkMode: 'class',
 }
