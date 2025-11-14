@@ -7,33 +7,40 @@ const AddCardModal = ({ show, onClose, cardToEdit }) => {
   const { subjects, addCard, updateCardWithSync } = useDataSync();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
-  const [subject, setSubject] = useState('');
+  const [subjectId, setSubjectId] = useState('');
 
   useEffect(() => {
     if (cardToEdit) {
       setQuestion(cardToEdit.question || '');
       setAnswer(cardToEdit.answer || '');
-      setSubject(cardToEdit.subject || '');
+      setSubjectId(cardToEdit.subject_id || '');
     } else {
+      // Reset for new card
       setQuestion('');
       setAnswer('');
       if (subjects && subjects.length > 0) {
-        setSubject(subjects[0].name);
+        setSubjectId(subjects[0].id); // Default to the first subject's ID
       }
     }
   }, [cardToEdit, show, subjects]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!question.trim() || !answer.trim()) {
-      toast.error('La question et la réponse sont obligatoires');
+    if (!question.trim() || !answer.trim() || !subjectId) {
+      toast.error('La question, la réponse et la matière sont obligatoires');
       return;
     }
 
+    const cardData = {
+      question: question.trim(),
+      answer: answer.trim(),
+      subject_id: subjectId,
+    };
+
     if (cardToEdit) {
-      updateCardWithSync(cardToEdit.id, { question: question.trim(), answer: answer.trim(), subject });
+      updateCardWithSync(cardToEdit.id, cardData);
     } else {
-      addCard({ question: question.trim(), answer: answer.trim(), subject });
+      addCard(cardData);
     }
 
     onClose();
@@ -67,12 +74,12 @@ const AddCardModal = ({ show, onClose, cardToEdit }) => {
           <label htmlFor="subject" className="label">Matière</label>
           <select
             id="subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value)}
             className="select"
           >
             {(subjects || []).map((s) => (
-              <option key={s.id} value={s.name}>
+              <option key={s.id} value={s.id}>
                 {s.name}
               </option>
             ))}

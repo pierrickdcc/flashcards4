@@ -1,10 +1,13 @@
 import React from 'react';
-import { Brain, Plus, FolderPlus, FilePlus, BookPlus } from 'lucide-react';
+import { Brain, Plus, FolderPlus } from 'lucide-react';
 import { useUIState } from '../context/UIStateContext';
 
 const Actions = ({ startReview, cardsToReviewCount, totalCards }) => {
-  const { setShowBulkAddModal, setShowAddSubjectModal, setReviewMode, setIsFreeReview } = useUIState();
+  // 1. RETIREZ setReviewMode et setIsFreeReview d'ici
+  const { setShowBulkAddModal, setShowAddSubjectModal } = useUIState();
 
+  // 2. CETTE FONCTION EST LA SOURCE DU BUG
+  /*
   const handleReviewClick = () => {
     if (cardsToReviewCount > 0) {
       setIsFreeReview(false);
@@ -13,7 +16,14 @@ const Actions = ({ startReview, cardsToReviewCount, totalCards }) => {
     }
     setReviewMode(true);
   };
+  */
 
+  // 3. LA BONNE FONCTION est juste d'appeler la prop
+  const handleReviewClick = () => {
+    startReview();
+  };
+
+  // Le reste de votre logique pour 'isDisabled' est parfait
   const canReview = cardsToReviewCount > 0;
   const canDoFreeReview = cardsToReviewCount === 0 && totalCards > 0;
   const isDisabled = !canReview && !canDoFreeReview;

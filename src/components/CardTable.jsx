@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Edit, Trash2, Check, X, Inbox } from 'lucide-react';
 import EmptyState from './EmptyState';
 
@@ -11,6 +11,8 @@ const CardTable = ({
   deleteCardWithSync,
   subjects
 }) => {
+  const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s.name])), [subjects]);
+
   if (filteredCards.length === 0) {
     return (
       <EmptyState
@@ -61,17 +63,17 @@ const CardTable = ({
               <td>
                 {editingCard?.id === card.id ? (
                   <select
-                    value={editingCard.subject}
-                    onChange={(e) => setEditingCard({ ...editingCard, subject: e.target.value })}
+                    value={editingCard.subject_id}
+                    onChange={(e) => setEditingCard({ ...editingCard, subject_id: e.target.value })}
                     className="select"
                   >
                     {(subjects || []).map(s => (
-                      <option key={s.id} value={s.name}>{s.name}</option>
+                      <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                 ) : (
                   <span className="subject-badge">
-                    {card.subject}
+                    {subjectMap.get(card.subject_id) || 'N/A'}
                   </span>
                 )}
               </td>

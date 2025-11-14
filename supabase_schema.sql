@@ -28,16 +28,17 @@ CREATE TABLE public.courses (
     workspace_id uuid NOT NULL,
     title text NOT NULL,
     content text,
-    subject text NOT NULL,
+    subject_id uuid, -- Modifié de 'subject text'
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT courses_pkey PRIMARY KEY (id),
-    CONSTRAINT courses_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+    CONSTRAINT courses_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+    CONSTRAINT courses_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id) ON DELETE SET NULL -- Ajout de la clé étrangère
 );
 
--- Index pour accélérer les recherches par workspace_id et subject
+-- Index pour accélérer les recherches
 CREATE INDEX idx_courses_workspace_id ON public.courses USING btree (workspace_id);
-CREATE INDEX idx_courses_subject ON public.courses USING btree (subject);
+CREATE INDEX idx_courses_subject_id ON public.courses USING btree (subject_id); -- Modifié de 'idx_courses_subject'
 
 
 -- =============================================
@@ -50,16 +51,17 @@ CREATE TABLE public.cards (
     workspace_id uuid NOT NULL,
     question text NOT NULL,
     answer text NOT NULL,
-    subject text NOT NULL,
+    subject_id uuid, -- Modifié de 'subject text'
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT cards_pkey PRIMARY KEY (id),
-    CONSTRAINT cards_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+    CONSTRAINT cards_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+    CONSTRAINT cards_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id) ON DELETE SET NULL -- Ajout de la clé étrangère
 );
 
 -- Index pour accélérer les recherches
 CREATE INDEX idx_cards_workspace_id ON public.cards USING btree (workspace_id);
-CREATE INDEX idx_cards_subject ON public.cards USING btree (subject);
+CREATE INDEX idx_cards_subject_id ON public.cards USING btree (subject_id); -- Modifié de 'idx_cards_subject'
 
 
 -- =============================================
