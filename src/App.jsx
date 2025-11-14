@@ -10,6 +10,7 @@ import ReviewMode from './components/ReviewMode';
 import ReviewSessionSetup from './components/ReviewSessionSetup';
 import HomePage from './components/HomePage';
 import CoursePage from './components/CoursePage';
+import FlashcardsPage from './components/FlashcardsPage'; // Import the new page
 import MainLayout from './components/MainLayout'; // Import the new layout
 
 const App = () => {
@@ -39,10 +40,10 @@ const App = () => {
     <MainLayout>
       <Routes>
         <Route path="/" element={ <HomePage isConfigured={isConfigured} /> } />
+        <Route path="/flashcards" element={<FlashcardsPage />} />
         <Route path="/course/:courseId" element={<CoursePage />} />
         {/* Add other routes here as needed, they will all have the layout */}
         {/* For example:
-        <Route path="/flashcards" element={<FlashcardsPage />} />
         <Route path="/courses" element={<CoursesListPage />} />
         <Route path="/memos" element={<MemoWallPage />} />
         <Route path="/stats" element={<StatsPage />} />

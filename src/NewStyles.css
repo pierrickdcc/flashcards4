@@ -68,9 +68,9 @@ body {
 /* Grille principale du Hub */
 .hub-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto;
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, 1fr); /* Changed to 2 columns */
+    grid-template-rows: auto auto auto;
+    gap: 1rem; /* Reduced gap */
 }
 
 /* Carte "À réviser" (principale) */
@@ -80,57 +80,57 @@ body {
     background: var(--background-glass);
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1rem; /* Reduced padding */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
 .review-card h2 {
-    font-size: 1.125rem;
+    font-size: 1rem; /* Reduced font size */
     font-weight: 600;
     color: var(--text-heading-color);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem; /* Reduced margin */
 }
 .review-count {
-    font-size: 4.5rem;
+    font-size: 3.5rem; /* Reduced font size */
     font-weight: 700;
     line-height: 1;
     color: var(--primary-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem; /* Reduced margin */
 }
 .review-card p {
-    font-size: 1rem;
+    font-size: 0.875rem; /* Reduced font size */
     color: var(--text-color);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem; /* Reduced margin */
 }
 .review-card .btn-primary {
     width: 100%;
     justify-content: center;
-    padding: 0.85rem;
-    font-size: 1rem;
+    padding: 0.75rem; /* Reduced padding */
+    font-size: 0.875rem; /* Reduced font size */
 }
 
 /* Carte "Prévisions" */
 .forecast-card {
-    grid-column: 2 / 4;
+    grid-column: 2 / 3; /* Changed grid column */
     grid-row: 1 / 2;
     background: var(--background-glass);
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1rem; /* Reduced padding */
 }
 .forecast-card h2 {
-    font-size: 1.125rem;
+    font-size: 1rem; /* Reduced font size */
     font-weight: 600;
     color: var(--text-heading-color);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem; /* Reduced margin */
 }
 .chart-placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: calc(100% - 2.5rem); /* Hauteur de la carte - titre */
-    min-height: 200px;
+    height: calc(100% - 2rem); /* Adjusted height */
+    min-height: 150px; /* Reduced min-height */
     background: rgba(0,0,0,0.1);
     border-radius: 12px;
     border: 2px dashed var(--border-color);
@@ -139,9 +139,8 @@ body {
 
 /* Section Mémos Épinglés */
 .pinned-memos-container {
-    grid-column: 1 / 4;
+    grid-column: 1 / 2; /* Changed grid column */
     grid-row: 2 / 3;
-    margin-top: 1rem;
 }
 .pinned-memos-container h2 {
     font-size: 1.25rem;
@@ -500,4 +499,49 @@ body.dark {
     color: var(--primary-color);
     border-bottom-color: transparent; /* No border on hover */
   }
+}
+
+/* --- Stats Banner --- */
+.stats-banner {
+  background: var(--background-body);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 1.5rem;
+}
+
+.stats-banner-content {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 1rem 0;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--primary-color);
+}
+
+.stat-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  color: var(--text-heading-color);
+}
+
+.stat-label {
+  font-size: 0.875rem; /* 14px */
+  color: var(--text-color);
 }
