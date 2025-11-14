@@ -12,6 +12,7 @@ export const UIStateProvider = ({ children }) => {
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
+  const [showAddContentModal, setShowAddContentModal] = useState(false); // New state for the main add modal
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewCards, setReviewCards] = useState([]);
   const [isCramMode, setIsCramMode] = useState(false);
@@ -47,6 +48,7 @@ export const UIStateProvider = ({ children }) => {
     showAddSubjectModal, setShowAddSubjectModal,
     showAddCardModal, setShowAddCardModal,
     showAddCourseModal, setShowAddCourseModal,
+    showAddContentModal, setShowAddContentModal, // Expose the new state
     reviewMode, setReviewMode,
     reviewCards, setReviewCards,
     isCramMode, setIsCramMode,

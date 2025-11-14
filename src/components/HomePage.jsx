@@ -81,7 +81,7 @@ const HomePage = () => {
         {/* Forecast Card */}
         <div className="forecast-card">
           <h2>Prévisions sur 7 jours</h2>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={150}> {/* Reduced height */}
             <BarChart data={forecast} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
               <XAxis dataKey="day" tick={{ fill: 'var(--text-color)', fontSize: 12 }} />
               <YAxis allowDecimals={false} tick={{ fill: 'var(--text-color)', fontSize: 12 }} />
@@ -96,57 +96,55 @@ const HomePage = () => {
 
         {/* Pinned Memos */}
         <div className="pinned-memos-container">
-          <h2><Pin size={18} style={{ transform: 'rotate(45deg)' }}/> Mémos Épinglés</h2>
+          <h2><Pin size={16} style={{ transform: 'rotate(45deg)' }}/> Mémos Épinglés</h2>
           <div className="pinned-memos-grid">
             {pinnedMemos.length > 0 ? pinnedMemos.map(memo => (
               <div key={memo.id} className={`memo-card memo-${memo.color}`} onClick={() => handleMemoClick(memo)}>
                 <p>{memo.content}</p>
               </div>
-            )) : <p className="text-sm">Aucun mémo épinglé pour le moment.</p>}
+            )) : <p className="text-sm opacity-60">Aucun mémo épinglé.</p>}
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="quick-actions">
+        {/* Difficult Cards */}
+        <div className="pinned-memos-container" style={{ gridColumn: '2 / 3', gridRow: '2 / 3' }}>
+            <h2>Cartes Difficiles</h2>
+            <div className="pinned-memos-grid">
+                {difficultCards.length > 0 ? difficultCards.map(card => (
+                    <div key={card.id} className="memo-card" style={{ cursor: 'default' }}>
+                        <h3 className="truncate text-sm font-semibold">{card.question}</h3>
+                        <p className="text-xs opacity-60 mt-1">Revue {card.reviewCount} fois</p>
+                    </div>
+                )) : <p className="text-sm opacity-60">Aucune carte difficile.</p>}
+            </div>
+        </div>
+
+        {/* Quick Actions - Now spanning full width at the bottom */}
+        <div className="quick-actions" style={{ gridColumn: '1 / 3', gridRow: '3 / 4' }}>
           <h2>Actions Rapides</h2>
           <div className="actions-grid">
             <a href="#" onClick={(e) => { e.preventDefault(); setShowAddCardModal(true); }} className="action-card">
-              <div className="action-card-icon"><Plus size={20} /></div>
+              <div className="action-card-icon"><Plus size={18} /></div>
               <div className="action-card-text">
                 <h3>Ajouter une Carte</h3>
                 <p>Créer une nouvelle flashcard</p>
               </div>
             </a>
             <a href="#" onClick={(e) => { e.preventDefault(); /* setShowBulkAddModal(true); */ }} className="action-card">
-              <div className="action-card-icon"><FileInput size={20} /></div>
+              <div className="action-card-icon"><FileInput size={18} /></div>
               <div className="action-card-text">
                 <h3>Ajout en Masse</h3>
-                <p>Importer plusieurs cartes à la fois</p>
+                <p>Importer des cartes</p>
               </div>
             </a>
             <a href="#" onClick={(e) => { e.preventDefault(); setShowAddCourseModal(true); }} className="action-card">
-              <div className="action-card-icon"><Book size={20} /></div>
+              <div className="action-card-icon"><Book size={18} /></div>
               <div className="action-card-text">
                 <h3>Ajouter un Cours</h3>
-                <p>Créer une nouvelle page de cours</p>
+                <p>Créer une page de cours</p>
               </div>
             </a>
           </div>
-        </div>
-
-        {/* Difficult Cards - Added as per request */}
-        <div className="quick-actions" style={{ gridRow: '4 / 5' }}>
-            <h2>Cartes Difficiles</h2>
-            <div className="actions-grid">
-                {difficultCards.length > 0 ? difficultCards.map(card => (
-                    <div key={card.id} className="action-card" style={{ flex: '1 1 300px' }}>
-                        <div className="action-card-text">
-                            <h3 className="truncate">{card.question}</h3>
-                            <p className="text-xs mt-1">Revue {card.reviewCount} fois</p>
-                        </div>
-                    </div>
-                )) : <p className="text-sm">Aucune carte difficile identifiée.</p>}
-            </div>
         </div>
 
       </div>
