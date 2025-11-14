@@ -12,13 +12,13 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
       <AuthProvider>
-        <DataSyncProvider>
-          <UIStateProvider>
+        <UIStateProvider>
+          <DataSyncProvider>
             <ThemeProvider>
               <App />
             </ThemeProvider>
-          </UIStateProvider>
-        </DataSyncProvider>
+          </DataSyncProvider>
+        </UIStateProvider>
       </AuthProvider>
     </Router>
   </StrictMode>
